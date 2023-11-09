@@ -27,7 +27,22 @@ jobs:
           node-version-file: .node-version
           cache: npm
 
+      - name: Use Cache if Available
+        id: dev-cache
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-dev
+        with:
+          # Path for node_modules
+          path: '**/node_modules'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
       - name: Install Dependencies
+        if: steps.dev-cache.outputs.cache-hit != 'true'
         id: npm-ci
         run: npm ci
 
