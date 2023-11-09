@@ -1,0 +1,2 @@
+# Don't include the dist folder in the language stats of GitHub
+dist/** -diff linguist-generated=true

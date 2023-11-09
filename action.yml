@@ -1,0 +1,21 @@
+name: autoupdate-fork-action
+description: Autoupdates fork branches with pull requests on changes to specified upstream branches.
+author: 'Ashish Padhy'
+
+branding:
+  icon: 'git-merge'
+  color: 'blue'
+
+inputs:
+  milliseconds:
+    description: 'Your input description here'
+    required: true
+    default: '1000'
+
+outputs:
+  time:
+    description: 'Your output description here'
+
+runs:
+  using: node20
+  main: dist/index.js
