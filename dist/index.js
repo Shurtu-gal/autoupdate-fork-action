@@ -25712,9 +25712,14 @@ const utils_1 = __nccwpck_require__(1314);
 function getValueFromInput(inputName, required, defaultValue, parse, enumeration) {
     try {
         const value = core.getInput(inputName, { required });
-        if (!value && defaultValue)
-            return defaultValue;
-        else if (!(0, utils_1.isValueInEnum)(value, enumeration))
+        if (!value) {
+            if (required)
+                throw new Error(`Input ${inputName} is required`);
+            else
+                return defaultValue;
+        }
+        else if (typeof enumeration === 'object' &&
+            !(0, utils_1.isValueInEnum)(value, enumeration))
             throw new Error(`Invalid value for input ${inputName}: ${value}`);
         else if (parse)
             return parse(value);
@@ -25737,8 +25742,8 @@ function setupEnvironment() {
         const githubToken = core.getInput('github_token', { required: true });
         const prFilter = getValueFromInput('pr_filter', false, types_1.EnumPRFilter.All, undefined, types_1.EnumPRFilter);
         const prReadyState = getValueFromInput('pr_ready_state', false, types_1.EnumPRReadyState.All, undefined, types_1.EnumPRReadyState);
-        const prLabels = getValueFromInput('pr_labels', false, [], commaSeparatedStringToArray);
-        const excludePrLabels = getValueFromInput('exclude_pr_labels', false, [], commaSeparatedStringToArray);
+        const prLabels = getValueFromInput('pr_label', false, [], commaSeparatedStringToArray);
+        const excludePrLabels = getValueFromInput('exclude_pr_label', false, [], commaSeparatedStringToArray);
         const mergeConflictAction = getValueFromInput('merge_conflict_action', false, types_1.EnumMergeConflictAction.Fail, undefined, types_1.EnumMergeConflictAction);
         const mergeMethod = getValueFromInput('merge_method', false, types_1.EnumMergeMethod.Merge, undefined, types_1.EnumMergeMethod);
         const mergeCommitMessage = getValueFromInput('merge_commit_message', false, '');
@@ -25796,6 +25801,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.run = void 0;
 /**
  * The entrypoint for the action.
  */
@@ -25816,6 +25822,7 @@ async function run() {
             core.setFailed(error.message);
     }
 }
+exports.run = run;
 run();
 
 

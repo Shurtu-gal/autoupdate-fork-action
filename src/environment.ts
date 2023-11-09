@@ -23,8 +23,13 @@ function getValueFromInput<Type>(
 ): Type {
   try {
     const value = core.getInput(inputName, { required })
-    if (!value && defaultValue) return defaultValue
-    else if (!isValueInEnum(value, enumeration))
+    if (!value) {
+      if (required) throw new Error(`Input ${inputName} is required`)
+      else return defaultValue as Type
+    } else if (
+      typeof enumeration === 'object' &&
+      !isValueInEnum(value, enumeration)
+    )
       throw new Error(`Invalid value for input ${inputName}: ${value}`)
     else if (parse) return parse(value)
     else return value as unknown as Type
@@ -61,13 +66,13 @@ export function setupEnvironment(): IEnvironment | Error {
       EnumPRReadyState
     )
     const prLabels = getValueFromInput<string[]>(
-      'pr_labels',
+      'pr_label',
       false,
       [],
       commaSeparatedStringToArray
     )
     const excludePrLabels = getValueFromInput<string[]>(
-      'exclude_pr_labels',
+      'exclude_pr_label',
       false,
       [],
       commaSeparatedStringToArray

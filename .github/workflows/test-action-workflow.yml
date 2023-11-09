@@ -6,6 +6,14 @@ on:
       github_token:
         description: 'GitHub Token'
         required: true
+      pr_filter:
+        description: 'Filter PRs'
+        required: true
+        type: choice
+        options:
+          - 'all'
+          - 'labelled'
+          - 'error'
 
 jobs:
   test:
@@ -15,8 +23,8 @@ jobs:
       - name: Debug Action
         uses: ./
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          pr_filter: 'all'
+          github_token: ${{ github.event.inputs.github_token }}
+          pr_filter: ${{ github.event.inputs.pr_filter }}
           pr_label: 'autoupdate'
           pr_ready_state: 'all'
           exclude_pr_label: ''
