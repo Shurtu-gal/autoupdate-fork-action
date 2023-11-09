@@ -25670,7 +25670,7 @@ exports["default"] = _default;
 
 /***/ }),
 
-/***/ 399:
+/***/ 6869:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -25699,24 +25699,116 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.run = void 0;
+exports.setupEnvironment = void 0;
+const types_1 = __nccwpck_require__(5077);
 const core = __importStar(__nccwpck_require__(2186));
-const wait_1 = __nccwpck_require__(5259);
+const utils_1 = __nccwpck_require__(1314);
+/**
+ *
+ * @description Gets a value from an input and parses it. Also checks if the value is in an enumeration.
+ * @returns {Type} The parsed value from the input. Or the default value if the input is not required and not set.
+ * @throws {Error} If the input is required and not set, or if the value is not in the enumeration.
+ */
+function getValueFromInput(inputName, required, defaultValue, parse, enumeration) {
+    try {
+        const value = core.getInput(inputName, { required });
+        if (!value && defaultValue)
+            return defaultValue;
+        else if (!(0, utils_1.isValueInEnum)(value, enumeration))
+            throw new Error(`Invalid value for input ${inputName}: ${value}`);
+        else if (parse)
+            return parse(value);
+        else
+            return value;
+    }
+    catch (error) {
+        throw new Error(`Unknown error while getting value from input ${inputName}: ${error}`);
+    }
+}
+function commaSeparatedStringToArray(value) {
+    return value.split(',').map(item => item.trim());
+}
+/**
+ * @description Sets up the environment for the action.
+ * @returns {IEnvironment | Error} The environment variables for the action, or an error if one occurred.
+ */
+function setupEnvironment() {
+    try {
+        const githubToken = core.getInput('github_token', { required: true });
+        const prFilter = getValueFromInput('pr_filter', false, types_1.EnumPRFilter.All, undefined, types_1.EnumPRFilter);
+        const prReadyState = getValueFromInput('pr_ready_state', false, types_1.EnumPRReadyState.All, undefined, types_1.EnumPRReadyState);
+        const prLabels = getValueFromInput('pr_labels', false, [], commaSeparatedStringToArray);
+        const excludePrLabels = getValueFromInput('exclude_pr_labels', false, [], commaSeparatedStringToArray);
+        const mergeConflictAction = getValueFromInput('merge_conflict_action', false, types_1.EnumMergeConflictAction.Fail, undefined, types_1.EnumMergeConflictAction);
+        const mergeMethod = getValueFromInput('merge_method', false, types_1.EnumMergeMethod.Merge, undefined, types_1.EnumMergeMethod);
+        const mergeCommitMessage = getValueFromInput('merge_commit_message', false, '');
+        const githubApiUrl = process.env.GITHUB_API_URL || 'https://api.github.com';
+        return {
+            githubApiUrl,
+            githubToken,
+            prFilter,
+            prReadyState,
+            prLabels,
+            excludePrLabels,
+            mergeConflictAction,
+            mergeMethod,
+            mergeCommitMessage
+        };
+    }
+    catch (error) {
+        if (error instanceof Error)
+            return error;
+        else
+            return new Error(`Unknown error while setting up environment: ${error}`);
+    }
+}
+exports.setupEnvironment = setupEnvironment;
+
+
+/***/ }),
+
+/***/ 6144:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+/**
+ * The entrypoint for the action.
+ */
+const core = __importStar(__nccwpck_require__(2186));
+const environment_1 = __nccwpck_require__(6869);
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 async function run() {
     try {
-        const ms = core.getInput('milliseconds');
-        // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-        core.debug(`Waiting ${ms} milliseconds ...`);
-        // Log the current timestamp, wait, then log the new timestamp
-        core.debug(new Date().toTimeString());
-        await (0, wait_1.wait)(parseInt(ms, 10));
-        core.debug(new Date().toTimeString());
-        // Set outputs for other workflow steps to use
-        core.setOutput('time', new Date().toTimeString());
+        const environment = (0, environment_1.setupEnvironment)();
+        console.log(environment);
     }
     catch (error) {
         // Fail the workflow run if an error occurs
@@ -25724,32 +25816,59 @@ async function run() {
             core.setFailed(error.message);
     }
 }
-exports.run = run;
+run();
 
 
 /***/ }),
 
-/***/ 5259:
+/***/ 5077:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.wait = void 0;
-/**
- * Wait for a number of milliseconds.
- * @param milliseconds The number of milliseconds to wait.
- * @returns {Promise<string>} Resolves with 'done!' after the wait is over.
- */
-async function wait(milliseconds) {
-    return new Promise(resolve => {
-        if (isNaN(milliseconds)) {
-            throw new Error('milliseconds not a number');
-        }
-        setTimeout(() => resolve('done!'), milliseconds);
-    });
+exports.EnumMergeMethod = exports.EnumMergeConflictAction = exports.EnumPRReadyState = exports.EnumPRFilter = void 0;
+var EnumPRFilter;
+(function (EnumPRFilter) {
+    EnumPRFilter["All"] = "all";
+    EnumPRFilter["Labelled"] = "labelled";
+    EnumPRFilter["Base"] = "base";
+    EnumPRFilter["Protected"] = "protected";
+    EnumPRFilter["AutoMerge"] = "auto_merge";
+})(EnumPRFilter || (exports.EnumPRFilter = EnumPRFilter = {}));
+var EnumPRReadyState;
+(function (EnumPRReadyState) {
+    EnumPRReadyState["All"] = "all";
+    EnumPRReadyState["Draft"] = "draft";
+    EnumPRReadyState["ReadyForReview"] = "ready_for_review";
+})(EnumPRReadyState || (exports.EnumPRReadyState = EnumPRReadyState = {}));
+var EnumMergeConflictAction;
+(function (EnumMergeConflictAction) {
+    EnumMergeConflictAction["Fail"] = "fail";
+    EnumMergeConflictAction["Ignore"] = "ignore";
+    EnumMergeConflictAction["Comment"] = "comment";
+})(EnumMergeConflictAction || (exports.EnumMergeConflictAction = EnumMergeConflictAction = {}));
+var EnumMergeMethod;
+(function (EnumMergeMethod) {
+    EnumMergeMethod["Merge"] = "merge";
+    EnumMergeMethod["Squash"] = "squash";
+    EnumMergeMethod["Rebase"] = "rebase";
+})(EnumMergeMethod || (exports.EnumMergeMethod = EnumMergeMethod = {}));
+
+
+/***/ }),
+
+/***/ 1314:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isValueInEnum = void 0;
+function isValueInEnum(value, enumeration) {
+    return Object.values(enumeration).includes(value);
 }
-exports.wait = wait;
+exports.isValueInEnum = isValueInEnum;
 
 
 /***/ }),
@@ -26016,22 +26135,12 @@ module.exports = require("zlib");
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be in strict mode.
-(() => {
-"use strict";
-var exports = __webpack_exports__;
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-/**
- * The entrypoint for the action.
- */
-const main_1 = __nccwpck_require__(399);
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
-(0, main_1.run)();
-
-})();
-
-module.exports = __webpack_exports__;
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = __nccwpck_require__(6144);
+/******/ 	module.exports = __webpack_exports__;
+/******/ 	
 /******/ })()
 ;
