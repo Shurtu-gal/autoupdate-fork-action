@@ -1,0 +1,26 @@
+name: Debug Action
+
+on:
+  workflow_dispatch:
+    inputs:
+      github_token:
+        description: 'GitHub Token'
+        required: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debug Action
+        uses: ./
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          pr_filter: 'all'
+          pr_label: 'autoupdate'
+          pr_ready_state: 'all'
+          exclude_pr_label: ''
+          merge_conflict_action: 'fail'
+          merge_method: 'merge'
+          merge_commit_message: ''
+
+          

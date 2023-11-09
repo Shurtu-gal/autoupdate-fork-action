@@ -7,14 +7,81 @@ branding:
   color: 'blue'
 
 inputs:
-  milliseconds:
-    description: 'Your input description here'
+  github_token:
+    description: >
+      Token used to authenticate with the GitHub API. It should belong to a user with write/maintain permissions to the repository. It also must have "repo" and "workflow" scopes so it can push to repo and edit workflows.
+      It cannot be the default GitHub Actions token GITHUB_TOKEN. GitHub Action token's permissions are limited to the repository that contains your workflows.
+      Provide token of the user that has rights to push to the repos that this action is suppose to update. Suggestions: Create a bot user and give it write access to the repos.
     required: true
-    default: '1000'
+  
+  pr_filter:
+    description: >
+      Controls how autoupdate chooses which pull requests to operate on.
+      - all: Operate on all pull requests.
+      - labeled: Operate on pull requests with the specified label. If no label is specified, the default label is autoupdate.
+      - base: Operate on pull requests with the specified base branch.
+      - protected: Operate on pull requests on protected branches.
+      - auto_merge: Operate on pull requests with auto merge enabled.
+    required: false
+    default: 'all'
+
+  pr_label:
+    description: >
+      The comma-separated list of labels to filter pull requests by. Only used when pr_filter is labeled.
+    required: false
+    default: 'autoupdate'
+
+  pr_ready_state:
+    description: >
+      Controls how autoupdate chooses which pull requests to operate on based on draft/ready state.
+      - all: Operate on all pull requests.
+      - draft: Operate on pull requests that are in draft state.
+      - ready_for_review: Operate on pull requests that are in ready for review state.
+    required: false
+    default: 'all'
+
+  exclude_pr_label:
+    description: >
+      The comma-separated list of labels to exclude pull requests by. Works with any pr_filter.
+    required: false
+    default: ''
+
+  merge_conflict_action:
+    description: >
+      Controls how autoupdate handles merge conflicts.
+      - fail: Fail the workflow.
+      - ignore: Ignore the merge conflict and continue.
+      - comment: Comment on the pull request with a message about the merge conflict.
+    required: false
+    default: 'fail'
+  
+  merge_method:
+    description: >
+      Controls how autoupdate updates the pull request.
+      - merge: Merge the head branch into the base branch.
+      - squash: Squash the head branch into a single commit on the base branch.
+      - rebase: Rebase the head branch onto the base branch.
+    required: false
+    deprecationMessage: 'Not supported yet. Will be supported in future releases.'
+    default: 'merge'
+
+  merge_commit_message:
+    description: >
+      The commit message to use when merging the head branch into the base branch. Only used when merge_method is merge.
+    required: false
+    deprecationMessage: 'Not supported yet. Will be supported in future releases.'
 
 outputs:
-  time:
-    description: 'Your output description here'
+  merge_status:
+    description: >
+      The status of the merge operation.
+      - success: The merge was successful.
+      - failure: The merge failed.
+      - skipped: The merge was skipped.
+  
+  merge_message:
+    description: >
+      The message of the merge operation.
 
 runs:
   using: node20
