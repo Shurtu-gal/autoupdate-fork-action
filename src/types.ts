@@ -1,3 +1,20 @@
+import * as github from '@actions/github'
+
+export type Octokit = ReturnType<typeof github.getOctokit>
+export type PullRequest = {
+  number: number
+  mergeable: string
+  baseRefName: string
+  baseRepository: {
+    name: string
+    owner: {
+      login: string
+    }
+  }
+  id: string
+  headRefOid: string
+}
+
 export enum EnumPRFilter {
   All = 'all',
   Labelled = 'labelled',

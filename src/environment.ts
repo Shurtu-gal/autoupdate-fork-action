@@ -48,7 +48,7 @@ function commaSeparatedStringToArray(value: string): string[] {
  * @description Sets up the environment for the action.
  * @returns {IEnvironment | Error} The environment variables for the action, or an error if one occurred.
  */
-export function setupEnvironment(): IEnvironment | Error {
+export function setupEnvironment(): IEnvironment {
   try {
     const githubToken = core.getInput('github_token', { required: true })
     const prFilter = getValueFromInput<EnumPRFilter>(
@@ -110,8 +110,7 @@ export function setupEnvironment(): IEnvironment | Error {
       mergeCommitMessage
     }
   } catch (error) {
-    if (error instanceof Error) return error
-    else
-      return new Error(`Unknown error while setting up environment: ${error}`)
+    if (error instanceof Error) throw error
+    else throw new Error(`Unknown error while setting up environment: ${error}`)
   }
 }
