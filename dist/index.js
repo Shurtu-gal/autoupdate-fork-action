@@ -31632,7 +31632,7 @@ function setupEnvironment() {
             excludePrLabels,
             mergeConflictAction,
             mergeMethod,
-            mergeCommitMessage
+            mergeCommitMessage,
         };
     }
     catch (error) {
@@ -31643,6 +31643,52 @@ function setupEnvironment() {
     }
 }
 exports.setupEnvironment = setupEnvironment;
+
+
+/***/ }),
+
+/***/ 6971:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.updateAllBranches = void 0;
+async function updateAllBranches(octokit, owner, repo, environment) {
+    console.log('updateAllBranches');
+    console.log(owner);
+    console.log(repo);
+}
+exports.updateAllBranches = updateAllBranches;
+
+
+/***/ }),
+
+/***/ 744:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.updatePullRequestsOnBranch = void 0;
+async function updatePullRequestsOnBranch(octokit, owner, branch, repo, environment) { }
+exports.updatePullRequestsOnBranch = updatePullRequestsOnBranch;
+
+
+/***/ }),
+
+/***/ 1328:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.updatePullRequest = void 0;
+async function updatePullRequest(octokit, pullRequest, environment) {
+    console.log('updatePullRequest');
+    console.log(pullRequest);
+}
+exports.updatePullRequest = updatePullRequest;
 
 
 /***/ }),
@@ -31684,22 +31730,69 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const plugin_retry_1 = __nccwpck_require__(6298);
 const environment_1 = __nccwpck_require__(6869);
+const updatePullRequest_1 = __nccwpck_require__(1328);
+const updateBranchPullRequest_1 = __nccwpck_require__(744);
+const updateAllBranches_1 = __nccwpck_require__(6971);
+const triggerEventName = process.env.GITHUB_EVENT_NAME;
+const eventPath = process.env.GITHUB_EVENT_PATH;
+let eventPayload = {};
+if (eventPath) {
+    __nccwpck_require__(7070)(eventPath).then(eventPayloadModule => {
+        eventPayload = eventPayloadModule;
+    });
+}
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 async function run() {
+    if ([
+        'pull_request',
+        'pull_request_target',
+        'push',
+        'workflow_dispatch',
+        'schedule',
+    ].includes(triggerEventName || '')) {
+        core.info(`Triggered by ${triggerEventName} event`);
+    }
+    else {
+        core.setFailed(`Unsupported event: ${triggerEventName}`);
+        return;
+    }
+    core.debug(`Event payload: ${JSON.stringify(eventPayload, null, 2)}`);
     try {
         const environment = (0, environment_1.setupEnvironment)();
         const octokit = github.getOctokit(environment.githubToken, {
-            baseUrl: environment.githubApiUrl
+            baseUrl: environment.githubApiUrl,
+            previews: ['merge-info-preview'],
         }, plugin_retry_1.retry);
-        console.log(process.env);
-        console.log(octokit.rest);
+        const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+        const branch = process.env.GITHUB_HEAD_REF;
+        switch (triggerEventName) {
+            case 'pull_request':
+            case 'pull_request_target':
+                if (!eventPayload.pull_request)
+                    throw new Error('No pull request found in payload');
+                core.debug(`Pull request payload: ${JSON.stringify(eventPayload.pull_request, null, 2)}`);
+                await (0, updatePullRequest_1.updatePullRequest)(octokit, eventPayload.pull_request, environment);
+                break;
+            case 'push':
+                await (0, updateBranchPullRequest_1.updatePullRequestsOnBranch)(octokit, owner, branch, repo, environment);
+                break;
+            case 'workflow_dispatch':
+            case 'schedule':
+                if (!owner || !repo)
+                    throw new Error('No owner or repo found in payload');
+                await (0, updateAllBranches_1.updateAllBranches)(octokit, owner, repo, environment);
+                break;
+        }
+        core.info('Done');
     }
     catch (error) {
         if (error instanceof Error)
             core.setFailed(error.message);
+        else if (!error)
+            core.setFailed('An unknown error occurred');
         else if (error?.request) {
             core.setFailed(`Request failed: ${error?.request}`);
         }
@@ -31719,7 +31812,30 @@ run();
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.EnumMergeMethod = exports.EnumMergeConflictAction = exports.EnumPRReadyState = exports.EnumPRFilter = void 0;
+exports.EnumMergeMethod = exports.EnumMergeConflictAction = exports.EnumPRReadyState = exports.EnumPRFilter = exports.mergeableState = void 0;
+/**
+ * @see https://docs.github.com/en/graphql/reference/enums#mergestatestatus
+ */
+var mergeStateStatus;
+(function (mergeStateStatus) {
+    mergeStateStatus["BEHIND"] = "BEHIND";
+    mergeStateStatus["BLOCKED"] = "BLOCKED";
+    mergeStateStatus["CLEAN"] = "CLEAN";
+    mergeStateStatus["DIRTY"] = "DIRTY";
+    mergeStateStatus["DRAFT"] = "DRAFT";
+    mergeStateStatus["HAS_HOOKS"] = "HAS_HOOKS";
+    mergeStateStatus["UNKNOWN"] = "UNKNOWN";
+    mergeStateStatus["UNSTABLE"] = "UNSTABLE";
+})(mergeStateStatus || (mergeStateStatus = {}));
+/**
+ * @see https://docs.github.com/en/graphql/reference/enums#mergeablestate
+ */
+var mergeableState;
+(function (mergeableState) {
+    mergeableState["CONFLICTING"] = "CONFLICTING";
+    mergeableState["MERGEABLE"] = "MERGEABLE";
+    mergeableState["UNKNOWN"] = "UNKNOWN";
+})(mergeableState || (exports.mergeableState = mergeableState = {}));
 var EnumPRFilter;
 (function (EnumPRFilter) {
     EnumPRFilter["All"] = "all";
@@ -31762,6 +31878,25 @@ function isValueInEnum(value, enumeration) {
 }
 exports.isValueInEnum = isValueInEnum;
 
+
+/***/ }),
+
+/***/ 7070:
+/***/ ((module) => {
+
+function webpackEmptyAsyncContext(req) {
+	// Here Promise.resolve().then() is used instead of new Promise() to prevent
+	// uncaught exception popping up in devtools
+	return Promise.resolve().then(() => {
+		var e = new Error("Cannot find module '" + req + "'");
+		e.code = 'MODULE_NOT_FOUND';
+		throw e;
+	});
+}
+webpackEmptyAsyncContext.keys = () => ([]);
+webpackEmptyAsyncContext.resolve = webpackEmptyAsyncContext;
+webpackEmptyAsyncContext.id = 7070;
+module.exports = webpackEmptyAsyncContext;
 
 /***/ }),
 
@@ -32022,6 +32157,11 @@ module.exports = require("zlib");
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";

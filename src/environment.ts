@@ -3,10 +3,10 @@ import {
   EnumMergeMethod,
   EnumPRFilter,
   EnumPRReadyState,
-  IEnvironment
-} from './types'
-import * as core from '@actions/core'
-import { isValueInEnum } from './utils'
+  IEnvironment,
+} from './types';
+import * as core from '@actions/core';
+import { isValueInEnum } from './utils';
 
 /**
  *
@@ -22,26 +22,26 @@ function getValueFromInput<Type>(
   enumeration?: any
 ): Type {
   try {
-    const value = core.getInput(inputName, { required })
+    const value = core.getInput(inputName, { required });
     if (!value) {
-      if (required) throw new Error(`Input ${inputName} is required`)
-      else return defaultValue as Type
+      if (required) throw new Error(`Input ${inputName} is required`);
+      else return defaultValue as Type;
     } else if (
       typeof enumeration === 'object' &&
       !isValueInEnum(value, enumeration)
     )
-      throw new Error(`Invalid value for input ${inputName}: ${value}`)
-    else if (parse) return parse(value)
-    else return value as unknown as Type
+      throw new Error(`Invalid value for input ${inputName}: ${value}`);
+    else if (parse) return parse(value);
+    else return value as unknown as Type;
   } catch (error) {
     throw new Error(
       `Unknown error while getting value from input ${inputName}: ${error}`
-    )
+    );
   }
 }
 
 function commaSeparatedStringToArray(value: string): string[] {
-  return value.split(',').map(item => item.trim())
+  return value.split(',').map(item => item.trim());
 }
 
 /**
@@ -50,53 +50,53 @@ function commaSeparatedStringToArray(value: string): string[] {
  */
 export function setupEnvironment(): IEnvironment {
   try {
-    const githubToken = core.getInput('github_token', { required: true })
+    const githubToken = core.getInput('github_token', { required: true });
     const prFilter = getValueFromInput<EnumPRFilter>(
       'pr_filter',
       false,
       EnumPRFilter.All,
       undefined,
       EnumPRFilter
-    )
+    );
     const prReadyState = getValueFromInput<EnumPRReadyState>(
       'pr_ready_state',
       false,
       EnumPRReadyState.All,
       undefined,
       EnumPRReadyState
-    )
+    );
     const prLabels = getValueFromInput<string[]>(
       'pr_label',
       false,
       [],
       commaSeparatedStringToArray
-    )
+    );
     const excludePrLabels = getValueFromInput<string[]>(
       'exclude_pr_label',
       false,
       [],
       commaSeparatedStringToArray
-    )
+    );
     const mergeConflictAction = getValueFromInput<EnumMergeConflictAction>(
       'merge_conflict_action',
       false,
       EnumMergeConflictAction.Fail,
       undefined,
       EnumMergeConflictAction
-    )
+    );
     const mergeMethod = getValueFromInput<EnumMergeMethod>(
       'merge_method',
       false,
       EnumMergeMethod.Merge,
       undefined,
       EnumMergeMethod
-    )
+    );
     const mergeCommitMessage = getValueFromInput<string>(
       'merge_commit_message',
       false,
       ''
-    )
-    const githubApiUrl = process.env.GITHUB_API_URL || 'https://api.github.com'
+    );
+    const githubApiUrl = process.env.GITHUB_API_URL || 'https://api.github.com';
 
     return {
       githubApiUrl,
@@ -107,10 +107,11 @@ export function setupEnvironment(): IEnvironment {
       excludePrLabels,
       mergeConflictAction,
       mergeMethod,
-      mergeCommitMessage
-    }
+      mergeCommitMessage,
+    };
   } catch (error) {
-    if (error instanceof Error) throw error
-    else throw new Error(`Unknown error while setting up environment: ${error}`)
+    if (error instanceof Error) throw error;
+    else
+      throw new Error(`Unknown error while setting up environment: ${error}`);
   }
 }

@@ -1,3 +1,5 @@
+import { mergeableState } from 'src/types';
+
 export const updatePullRequestBranchMutation = `
   mutation update($input: UpdatePullRequestBranchInput!) {
     updatePullRequestBranch(input: $input) {
@@ -6,11 +8,12 @@ export const updatePullRequestBranchMutation = `
       }
     }
   }
-`
+`;
+
 export type UpdatePullRequestBranchMutationResponse = {
   updatePullRequestBranch: {
     pullRequest: {
-      mergeable: string
-    }
-  }
-}
+      mergeable: mergeableState;
+    };
+  };
+};

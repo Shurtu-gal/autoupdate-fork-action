@@ -14,6 +14,13 @@ on:
           - 'all'
           - 'labelled'
           - 'error'
+  pull_request:
+    types: [opened, labeled, unlabeled, synchronize, ready_for_review, reopened]
+  push:
+    branches:
+      - master
+      - main
+      - 'releases/*'
 
 jobs:
   test:
@@ -23,8 +30,8 @@ jobs:
       - name: Debug Action
         uses: ./
         with:
-          github_token: ${{ github.event.inputs.github_token }}
-          pr_filter: ${{ github.event.inputs.pr_filter }}
+          github_token: ${{ github.event.inputs.github_token || secrets.BOT_TOKEN }}
+          pr_filter: ${{ github.event.inputs.pr_filter || 'all' }}
           pr_label: 'autoupdate'
           pr_ready_state: 'all'
           exclude_pr_label: ''

@@ -1,0 +1,71 @@
+import { PullRequest } from 'src/types';
+
+/**
+ * @description The graphql query to get all pull requests for a branch in a repository.
+ * @see https://docs.github.com/en/graphql/overview/schema-previews#merge-info-preview-more-detailed-information-about-a-pull-requests-merge-state-preview
+ * @since merge-info-preview is in preview, we need to pass the custom media type header to the graphql api.
+ */
+export const getPullRequestsQuery = `
+  query getPullRequest($owner: String!, $repo: String!, $branch: String!) {
+    repository(owner: $owner, name: $repo, followRenames: true) {
+      pullRequests(states: OPEN, first: 100, baseRefName: $branch) {
+        edges {
+          node {
+            number
+            mergeable
+            mergeStateStatus
+            baseRefName
+            baseRepository {
+              name
+              owner {
+                login
+              }
+            }
+            id
+            headRefOid
+          }
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * @description The graphql query to get all pull requests for a repository.
+ * @see https://docs.github.com/en/graphql/overview/schema-previews#merge-info-preview-more-detailed-information-about-a-pull-requests-merge-state-preview
+ * @since merge-info-preview is in preview, we need to pass the custom media type header to the graphql api.
+ */
+export const getAllPullRequestsQuery = `
+  query getPullRequest($owner: String!, $repo: String!) {
+    repository(owner: $owner, name: $repo, followRenames: true) {
+      pullRequests(states: OPEN, first: 100) {
+        edges {
+          node {
+            number
+            mergeable
+            mergeStateStatus
+            baseRefName
+            baseRepository {
+              name
+              owner {
+                login
+              }
+            }
+            id
+            headRefOid
+          }
+        }
+      }
+    }
+  }
+`;
+
+export type GetPullRequestsQueryResponse = {
+  repository: {
+    pullRequests: {
+      edges: {
+        node: PullRequest;
+      }[];
+    };
+  };
+};

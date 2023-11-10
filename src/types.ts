@@ -1,54 +1,83 @@
-import * as github from '@actions/github'
+import * as github from '@actions/github';
 
-export type Octokit = ReturnType<typeof github.getOctokit>
-export type PullRequest = {
-  number: number
-  mergeable: string
-  baseRefName: string
-  baseRepository: {
-    name: string
-    owner: {
-      login: string
-    }
-  }
-  id: string
-  headRefOid: string
+export type Octokit = ReturnType<typeof github.getOctokit>;
+
+/**
+ * @see https://docs.github.com/en/graphql/reference/enums#mergestatestatus
+ */
+enum mergeStateStatus {
+  BEHIND = 'BEHIND',
+  BLOCKED = 'BLOCKED',
+  CLEAN = 'CLEAN',
+  DIRTY = 'DIRTY',
+  DRAFT = 'DRAFT',
+  HAS_HOOKS = 'HAS_HOOKS',
+  UNKNOWN = 'UNKNOWN',
+  UNSTABLE = 'UNSTABLE',
 }
+
+/**
+ * @see https://docs.github.com/en/graphql/reference/enums#mergeablestate
+ */
+export enum mergeableState {
+  CONFLICTING = 'CONFLICTING',
+  MERGEABLE = 'MERGEABLE',
+  UNKNOWN = 'UNKNOWN',
+}
+
+export type PullRequest = {
+  id: string;
+  number: number;
+  headRefOid: string;
+  mergeable: mergeableState;
+  mergeStateStatus: mergeStateStatus;
+  baseRefName: string;
+  baseRepository: {
+    name: string;
+    owner: {
+      login: string;
+    };
+  };
+};
+
+export type RestPullRequest = Awaited<
+  ReturnType<Octokit['rest']['pulls']['list']>
+>['data'][0];
 
 export enum EnumPRFilter {
   All = 'all',
   Labelled = 'labelled',
   Base = 'base',
   Protected = 'protected',
-  AutoMerge = 'auto_merge'
+  AutoMerge = 'auto_merge',
 }
 
 export enum EnumPRReadyState {
   All = 'all',
   Draft = 'draft',
-  ReadyForReview = 'ready_for_review'
+  ReadyForReview = 'ready_for_review',
 }
 
 export enum EnumMergeConflictAction {
   Fail = 'fail',
   Ignore = 'ignore',
-  Comment = 'comment'
+  Comment = 'comment',
 }
 
 export enum EnumMergeMethod {
   Merge = 'merge',
   Squash = 'squash',
-  Rebase = 'rebase'
+  Rebase = 'rebase',
 }
 
 export interface IEnvironment {
-  githubApiUrl: string
-  githubToken: string
-  prFilter: EnumPRFilter
-  prReadyState: EnumPRReadyState
-  prLabels: string[]
-  excludePrLabels: string[]
-  mergeConflictAction: EnumMergeConflictAction
-  mergeMethod: EnumMergeMethod
-  mergeCommitMessage: string
+  githubApiUrl: string;
+  githubToken: string;
+  prFilter: EnumPRFilter;
+  prReadyState: EnumPRReadyState;
+  prLabels: string[];
+  excludePrLabels: string[];
+  mergeConflictAction: EnumMergeConflictAction;
+  mergeMethod: EnumMergeMethod;
+  mergeCommitMessage: string;
 }
