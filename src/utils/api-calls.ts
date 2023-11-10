@@ -102,7 +102,7 @@ export async function updateRestPullRequest(
     core.error(
       `Did not find all required fields to update pull request ${number}`
     );
-    core.debug('Pull request: ' + JSON.stringify(pullRequest));
+    core.debug(`Pull request: ${JSON.stringify(pullRequest)}`);
     return;
   }
 
