@@ -1,4 +1,4 @@
-# Autoupdate Fork Action
+# Autoupdate Fork Action Test
 
 [![GitHub Super-Linter](https://github.com/Shurtu-gal/autoupdate-fork-action/actions/workflows/linter.yml/badge.svg)](https://github.com/super-linter/super-linter)
 ![CI](https://github.com/Shurtu-gal/autoupdate-fork-action/actions/workflows/ci.yml/badge.svg)
