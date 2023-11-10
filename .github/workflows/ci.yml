@@ -1,11 +1,12 @@
 name: Continuous Integration
 
 on:
-  pull_request:
-  push:
-    branches:
-      - main
-      - 'releases/*'
+  workflow_dispatch:
+  # pull_request:
+  # push:
+  #   branches:
+  #     - main
+  #     - 'releases/*'
 
 permissions:
   contents: read
