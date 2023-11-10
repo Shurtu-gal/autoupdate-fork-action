@@ -31737,9 +31737,8 @@ const triggerEventName = process.env.GITHUB_EVENT_NAME;
 const eventPath = process.env.GITHUB_EVENT_PATH;
 let eventPayload = {};
 if (eventPath) {
-    __nccwpck_require__(7070)(eventPath).then(eventPayloadModule => {
-        eventPayload = eventPayloadModule;
-    });
+    // Get the JSON webhook payload for the event that triggered the workflow
+    eventPayload = require(eventPath);
 }
 /**
  * The main function for the action.
@@ -31878,25 +31877,6 @@ function isValueInEnum(value, enumeration) {
 }
 exports.isValueInEnum = isValueInEnum;
 
-
-/***/ }),
-
-/***/ 7070:
-/***/ ((module) => {
-
-function webpackEmptyAsyncContext(req) {
-	// Here Promise.resolve().then() is used instead of new Promise() to prevent
-	// uncaught exception popping up in devtools
-	return Promise.resolve().then(() => {
-		var e = new Error("Cannot find module '" + req + "'");
-		e.code = 'MODULE_NOT_FOUND';
-		throw e;
-	});
-}
-webpackEmptyAsyncContext.keys = () => ([]);
-webpackEmptyAsyncContext.resolve = webpackEmptyAsyncContext;
-webpackEmptyAsyncContext.id = 7070;
-module.exports = webpackEmptyAsyncContext;
 
 /***/ }),
 
@@ -32157,11 +32137,6 @@ module.exports = require("zlib");
 /******/ 	}
 /******/ 	
 /************************************************************************/
-/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	(() => {
-/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ 	})();
-/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";

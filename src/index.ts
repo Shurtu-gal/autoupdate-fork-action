@@ -15,9 +15,8 @@ const eventPath = process.env.GITHUB_EVENT_PATH;
 let eventPayload: Record<string, unknown> = {};
 
 if (eventPath) {
-  import(eventPath).then(eventPayloadModule => {
-    eventPayload = eventPayloadModule;
-  });
+  // Get the JSON webhook payload for the event that triggered the workflow
+  eventPayload = require(eventPath);
 }
 
 /**
