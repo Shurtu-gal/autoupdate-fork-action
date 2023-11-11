@@ -6,7 +6,7 @@ import * as github from '@actions/github';
 import { retry } from '@octokit/plugin-retry';
 import { setupEnvironment } from './environment';
 import { updatePullRequest } from './events/updatePullRequest';
-import { PullRequest } from './types';
+import { PullRequest, RestPullRequest } from './types';
 import { updatePullRequestsOnBranch } from './events/updateBranchPullRequest';
 import { updateAllBranches } from './events/updateAllBranches';
 
@@ -70,7 +70,7 @@ export async function run(): Promise<void> {
 
         await updatePullRequest(
           octokit,
-          eventPayload.pull_request as PullRequest,
+          eventPayload.pull_request as RestPullRequest,
           environment
         );
         break;

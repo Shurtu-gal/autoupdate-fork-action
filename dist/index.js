@@ -31665,30 +31665,223 @@ exports.updateAllBranches = updateAllBranches;
 /***/ }),
 
 /***/ 744:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.updatePullRequestsOnBranch = void 0;
-async function updatePullRequestsOnBranch(octokit, owner, branch, repo, environment) { }
+const api_calls_1 = __nccwpck_require__(3301);
+const core = __importStar(__nccwpck_require__(2186));
+const pr_needs_update_1 = __nccwpck_require__(5926);
+async function updatePullRequestsOnBranch(octokit, owner, branch, repo, environment) {
+    const pulls = await (0, api_calls_1.getPullRequestsOnBranch)(octokit, branch, owner, repo, environment.githubApiUrl);
+    pulls.forEach(async (pull) => {
+        core.startGroup(`Updating pull request ${pull.number}`);
+        core.debug(`Pull request payload: ${JSON.stringify(pull, null, 2)}`);
+        if ((0, pr_needs_update_1.prNeedsUpdate)(pull, environment)) {
+            await (0, api_calls_1.updatePullRequest)(octokit, pull, environment.githubApiUrl);
+        }
+        core.endGroup();
+    });
+}
 exports.updatePullRequestsOnBranch = updatePullRequestsOnBranch;
 
 
 /***/ }),
 
 /***/ 1328:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.updatePullRequest = void 0;
+const api_calls_1 = __nccwpck_require__(3301);
+const core = __importStar(__nccwpck_require__(2186));
+const pr_needs_update_1 = __nccwpck_require__(5926);
+async function updatePullRequest(octokit, pullRequest, environment) {
+    core.startGroup(`Updating pull request ${pullRequest.number}`);
+    const { node_id } = pullRequest;
+    const pullRequestNode = await (0, api_calls_1.getPullRequest)(octokit, node_id, environment.githubApiUrl);
+    core.debug(`Pull request payload: ${JSON.stringify(pullRequest, null, 2)}`);
+    if (!pullRequestNode) {
+        core.error(`Failed to get pull request ${pullRequest.number}`);
+        return;
+    }
+    if ((0, pr_needs_update_1.prNeedsUpdate)(pullRequestNode, environment)) {
+        await (0, api_calls_1.updateRestPullRequest)(octokit, pullRequest, environment.githubApiUrl);
+    }
+    core.endGroup();
+    return;
+}
+exports.updatePullRequest = updatePullRequest;
+
+
+/***/ }),
+
+/***/ 1924:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.updatePullRequest = void 0;
-async function updatePullRequest(octokit, pullRequest, environment) {
-    console.log('updatePullRequest');
-    console.log(pullRequest);
-}
-exports.updatePullRequest = updatePullRequest;
+exports.updatePullRequestBranchMutation = void 0;
+exports.updatePullRequestBranchMutation = `
+  mutation update($input: UpdatePullRequestBranchInput!) {
+    updatePullRequestBranch(input: $input) {
+      pullRequest {
+        mergeable
+      }
+    }
+  }
+`;
+
+
+/***/ }),
+
+/***/ 7637:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getPullRequestQuery = void 0;
+exports.getPullRequestQuery = `
+  query getPullRequest($nodeId: ID!) {
+    node(id: $nodeId) {
+      ... on PullRequest {
+        number
+        mergeable
+        mergeStateStatus
+        baseRefName
+        baseRepository {
+          name
+          owner {
+            login
+          }
+        }
+        id
+        headRefOid
+      }
+    }
+  }
+`;
+
+
+/***/ }),
+
+/***/ 5957:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getAllPullRequestsQuery = exports.getPullRequestsQuery = void 0;
+/**
+ * @description The graphql query to get all pull requests for a branch in a repository.
+ * @see https://docs.github.com/en/graphql/overview/schema-previews#merge-info-preview-more-detailed-information-about-a-pull-requests-merge-state-preview
+ * @since merge-info-preview is in preview, we need to pass the custom media type header to the graphql api.
+ */
+exports.getPullRequestsQuery = `
+  query getPullRequest($owner: String!, $repo: String!, $branch: String!) {
+    repository(owner: $owner, name: $repo, followRenames: true) {
+      pullRequests(states: OPEN, first: 100, baseRefName: $branch) {
+        edges {
+          node {
+            number
+            mergeable
+            mergeStateStatus
+            baseRefName
+            baseRepository {
+              name
+              owner {
+                login
+              }
+            }
+            id
+            headRefOid
+          }
+        }
+      }
+    }
+  }
+`;
+/**
+ * @description The graphql query to get all pull requests for a repository.
+ * @see https://docs.github.com/en/graphql/overview/schema-previews#merge-info-preview-more-detailed-information-about-a-pull-requests-merge-state-preview
+ * @since merge-info-preview is in preview, we need to pass the custom media type header to the graphql api.
+ */
+exports.getAllPullRequestsQuery = `
+  query getPullRequest($owner: String!, $repo: String!) {
+    repository(owner: $owner, name: $repo, followRenames: true) {
+      pullRequests(states: OPEN, first: 100) {
+        edges {
+          node {
+            number
+            mergeable
+            mergeStateStatus
+            baseRefName
+            baseRepository {
+              name
+              owner {
+                login
+              }
+            }
+            id
+            headRefOid
+          }
+        }
+      }
+    }
+  }
+`;
 
 
 /***/ }),
@@ -31811,7 +32004,7 @@ run();
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.EnumMergeMethod = exports.EnumMergeConflictAction = exports.EnumPRReadyState = exports.EnumPRFilter = exports.mergeableState = void 0;
+exports.EnumMergeMethod = exports.EnumMergeConflictAction = exports.EnumPRReadyState = exports.EnumPRFilter = exports.mergeableState = exports.mergeStateStatus = void 0;
 /**
  * @see https://docs.github.com/en/graphql/reference/enums#mergestatestatus
  */
@@ -31825,7 +32018,7 @@ var mergeStateStatus;
     mergeStateStatus["HAS_HOOKS"] = "HAS_HOOKS";
     mergeStateStatus["UNKNOWN"] = "UNKNOWN";
     mergeStateStatus["UNSTABLE"] = "UNSTABLE";
-})(mergeStateStatus || (mergeStateStatus = {}));
+})(mergeStateStatus || (exports.mergeStateStatus = mergeStateStatus = {}));
 /**
  * @see https://docs.github.com/en/graphql/reference/enums#mergeablestate
  */
@@ -31876,6 +32069,183 @@ function isValueInEnum(value, enumeration) {
     return Object.values(enumeration).includes(value);
 }
 exports.isValueInEnum = isValueInEnum;
+
+
+/***/ }),
+
+/***/ 3301:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.updateRestPullRequest = exports.getPullRequest = exports.updatePullRequest = exports.getAllPullRequests = exports.getPullRequestsOnBranch = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const pull_request_1 = __nccwpck_require__(1924);
+const pull_request_2 = __nccwpck_require__(5957);
+const node_1 = __nccwpck_require__(7637);
+async function getPullRequestsOnBranch(octokit, branch, owner, repo, baseUrl) {
+    const { repository } = (await octokit.graphql(node_1.getPullRequestQuery, {
+        owner,
+        repo,
+        branch,
+        baseUrl,
+    }));
+    const pulls = repository.pullRequests.edges.map(edge => edge.node);
+    if (pulls.length === 0) {
+        core.info(`No pull requests found on branch ${branch}`);
+    }
+    if (pulls.length > 1) {
+        core.info(`Found ${pulls.length} pull requests on branch ${branch}`);
+    }
+    return pulls;
+}
+exports.getPullRequestsOnBranch = getPullRequestsOnBranch;
+async function getAllPullRequests(octokit, owner, repo, baseUrl) {
+    const { repository } = (await octokit.graphql(pull_request_2.getAllPullRequestsQuery, {
+        owner,
+        repo,
+        baseUrl,
+    }));
+    const pulls = repository.pullRequests.edges.map(edge => edge.node);
+    if (pulls.length === 0) {
+        core.info(`No pull requests found`);
+    }
+    if (pulls.length > 1) {
+        core.info(`Found ${pulls.length} pull requests`);
+    }
+    return pulls;
+}
+exports.getAllPullRequests = getAllPullRequests;
+async function updatePullRequest(octokit, pullRequest, baseUrl) {
+    const response = (await octokit.graphql(pull_request_1.updatePullRequestBranchMutation, {
+        input: {
+            pullRequestId: pullRequest.id,
+            expectedHeadOid: pullRequest.headRefOid,
+        },
+        baseUrl,
+    }));
+    if (!response.updatePullRequestBranch.pullRequest) {
+        core.error(`Failed to update pull request ${pullRequest.number}`);
+        return;
+    }
+    core.info(`Updated pull request ${pullRequest.number}`);
+}
+exports.updatePullRequest = updatePullRequest;
+async function getPullRequest(octokit, pullRequestId, baseUrl) {
+    const { node } = (await octokit.graphql(pull_request_2.getPullRequestsQuery, {
+        nodeId: pullRequestId,
+        baseUrl,
+    }));
+    return node;
+}
+exports.getPullRequest = getPullRequest;
+async function updateRestPullRequest(octokit, pullRequest, baseUrl) {
+    const { base: { user, repo }, head: { sha }, number, } = pullRequest;
+    if (!user || !repo || !sha || !number) {
+        core.error(`Did not find all required fields to update pull request ${number}`);
+        core.debug(`Pull request: ${JSON.stringify(pullRequest)}`);
+        return;
+    }
+    const { status } = await octokit.rest.pulls.updateBranch({
+        owner: user?.login,
+        repo: repo?.name,
+        pull_number: number,
+        expected_head_sha: sha,
+        baseUrl,
+    });
+    if (status !== 202) {
+        core.error(`Failed to update pull request ${number}`);
+        return;
+    }
+    core.info(`Updated pull request ${number}`);
+}
+exports.updateRestPullRequest = updateRestPullRequest;
+
+
+/***/ }),
+
+/***/ 5926:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.prNeedsUpdate = void 0;
+const types_1 = __nccwpck_require__(5077);
+const core = __importStar(__nccwpck_require__(2186));
+const prNeedsUpdate = (pullRequest, environment) => {
+    if (pullRequest.mergeable === types_1.mergeableState.UNKNOWN || pullRequest.mergeable === types_1.mergeableState.CONFLICTING) {
+        core.error(`Pull request ${pullRequest.number} mergeable state is unknown or conflicting. Try again later`);
+        return false;
+    }
+    switch (pullRequest.mergeStateStatus) {
+        case types_1.mergeStateStatus.BEHIND:
+        case types_1.mergeStateStatus.CLEAN:
+        case types_1.mergeStateStatus.HAS_HOOKS:
+            return true;
+        case types_1.mergeStateStatus.BLOCKED:
+            core.error(`Pull request ${pullRequest.number} is blocked`);
+            return false;
+        case types_1.mergeStateStatus.DIRTY:
+            core.error(`Pull request ${pullRequest.number} is dirty, merge-commit cannot be cleanly created`);
+            return false;
+        case types_1.mergeStateStatus.DRAFT:
+            core.error(`Pull request ${pullRequest.number} is a draft`);
+            return false;
+        case types_1.mergeStateStatus.UNKNOWN:
+        case types_1.mergeStateStatus.UNSTABLE:
+            core.error(`Pull request ${pullRequest.number} merge state is unknown or unstable. Try again later`);
+            return false;
+    }
+};
+exports.prNeedsUpdate = prNeedsUpdate;
 
 
 /***/ }),

@@ -5,7 +5,7 @@ export type Octokit = ReturnType<typeof github.getOctokit>;
 /**
  * @see https://docs.github.com/en/graphql/reference/enums#mergestatestatus
  */
-enum mergeStateStatus {
+export enum mergeStateStatus {
   BEHIND = 'BEHIND',
   BLOCKED = 'BLOCKED',
   CLEAN = 'CLEAN',
