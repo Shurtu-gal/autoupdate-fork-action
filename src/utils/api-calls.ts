@@ -9,6 +9,10 @@ import {
   getAllPullRequestsQuery,
   getPullRequestsQuery,
 } from '../graphql/queries/pull-request';
+import {
+  GetPullRequestResponse,
+  getPullRequestQuery,
+} from 'src/graphql/queries/node';
 
 export async function getPullRequestsOnBranch(
   octokit: Octokit,
@@ -17,6 +21,13 @@ export async function getPullRequestsOnBranch(
   repo: string,
   baseUrl: string
 ): Promise<PullRequest[]> {
+  core.debug(
+    `Variables in getAllPullRequests: ${JSON.stringify(
+      { owner, repo, baseUrl, branch },
+      null,
+      2
+    )}`
+  );
   const { repository } = (await octokit.graphql(getPullRequestsQuery, {
     owner,
     repo,
@@ -87,7 +98,19 @@ export async function updatePullRequest(
   core.info(`Updated pull request ${pullRequest.number}`);
 }
 
-// As there is no GraphQL API currently to get pull request using node id, we need to use REST API
+export async function getPullRequest(
+  octokit: Octokit,
+  pullRequestId: string,
+  baseUrl: string
+): Promise<PullRequest | undefined> {
+  const { node } = (await octokit.graphql(getPullRequestQuery, {
+    nodeId: pullRequestId,
+    baseUrl,
+  })) as GetPullRequestResponse;
+
+  return node;
+}
+
 export async function updateRestPullRequest(
   octokit: Octokit,
   pullRequest: RestPullRequest,

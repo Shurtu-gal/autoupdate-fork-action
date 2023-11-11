@@ -6,7 +6,7 @@ import * as github from '@actions/github';
 import { retry } from '@octokit/plugin-retry';
 import { setupEnvironment } from './environment';
 import { updatePullRequest } from './events/updatePullRequest';
-import { PullRequest } from './types';
+import { RestPullRequest } from './types';
 import { updatePullRequestsOnBranch } from './events/updateBranchPullRequest';
 import { updateAllBranches } from './events/updateAllBranches';
 
@@ -38,7 +38,7 @@ export async function run(): Promise<void> {
     core.setFailed(`Unsupported event: ${triggerEventName}`);
     return;
   }
-
+  core.debug(`Process env: ${JSON.stringify(process.env, null, 2)}`);
   core.debug(`Event payload: ${JSON.stringify(eventPayload, null, 2)}`);
 
   try {
@@ -46,14 +46,14 @@ export async function run(): Promise<void> {
     const octokit = github.getOctokit(
       environment.githubToken,
       {
-        baseUrl: environment.githubApiUrl,
+        baseUrl: environment.githubGraphqlApiUrl,
         previews: ['merge-info-preview'],
       },
       retry
     );
 
     const [owner, repo] = process.env.GITHUB_REPOSITORY!.split('/');
-    const branch = process.env.GITHUB_HEAD_REF!;
+    const branch = process.env.GITHUB_REF_NAME!;
 
     switch (triggerEventName) {
       case 'pull_request':
@@ -70,7 +70,7 @@ export async function run(): Promise<void> {
 
         await updatePullRequest(
           octokit,
-          eventPayload.pull_request as PullRequest,
+          eventPayload.pull_request as RestPullRequest,
           environment
         );
         break;

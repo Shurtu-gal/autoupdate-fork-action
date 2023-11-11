@@ -35,7 +35,7 @@ inputs:
     description: >
       Controls how autoupdate chooses which pull requests to operate on based on draft/ready state.
       - all: Operate on all pull requests.
-      - draft: Operate on pull requests that are in draft state.
+      - draft: Operate on pull requests that are in draft state. ( Not supported yet. Will be supported in future releases.)
       - ready_for_review: Operate on pull requests that are in ready for review state.
     required: false
     default: 'all'

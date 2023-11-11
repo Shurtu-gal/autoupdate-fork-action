@@ -96,10 +96,14 @@ export function setupEnvironment(): IEnvironment {
       false,
       ''
     );
-    const githubApiUrl = process.env.GITHUB_API_URL || 'https://api.github.com';
+    const githubRestApiUrl =
+      process.env.GITHUB_API_URL || 'https://api.github.com';
+    const githubGraphqlApiUrl =
+      process.env.GITHUB_GRAPHQL_URL || 'https://api.github.com/graphql';
 
     return {
-      githubApiUrl,
+      githubRestApiUrl,
+      githubGraphqlApiUrl,
       githubToken,
       prFilter,
       prReadyState,
