@@ -32115,6 +32115,7 @@ async function getPullRequestsOnBranch(octokit, branch, owner, repo, baseUrl) {
         branch,
         baseUrl,
     }));
+    core.debug(`Variables in getAllPullRequests: ${JSON.stringify({ owner, repo, baseUrl, branch }, null, 2)}`);
     const pulls = repository.pullRequests.edges.map(edge => edge.node);
     if (pulls.length === 0) {
         core.info(`No pull requests found on branch ${branch}`);
@@ -32131,7 +32132,6 @@ async function getAllPullRequests(octokit, owner, repo, baseUrl) {
         repo,
         baseUrl,
     }));
-    core.debug(`Variables in getAllPullRequests: ${JSON.stringify({ owner, repo, baseUrl }, null, 2)}`);
     const pulls = repository.pullRequests.edges.map(edge => edge.node);
     if (pulls.length === 0) {
         core.info(`No pull requests found`);

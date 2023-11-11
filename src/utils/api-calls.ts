@@ -28,6 +28,14 @@ export async function getPullRequestsOnBranch(
     baseUrl,
   })) as GetPullRequestsQueryResponse;
 
+  core.debug(
+    `Variables in getAllPullRequests: ${JSON.stringify(
+      { owner, repo, baseUrl, branch },
+      null,
+      2
+    )}`
+  );
+
   const pulls = repository.pullRequests.edges.map(
     edge => edge.node
   ) as PullRequest[];
@@ -54,14 +62,6 @@ export async function getAllPullRequests(
     repo,
     baseUrl,
   })) as GetPullRequestsQueryResponse;
-
-  core.debug(
-    `Variables in getAllPullRequests: ${JSON.stringify(
-      { owner, repo, baseUrl },
-      null,
-      2
-    )}`
-  );
 
   const pulls = repository.pullRequests.edges.map(
     edge => edge.node
