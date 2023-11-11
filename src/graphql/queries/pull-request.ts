@@ -6,7 +6,7 @@ import { PullRequest } from 'src/types';
  * @since merge-info-preview is in preview, we need to pass the custom media type header to the graphql api.
  */
 export const getPullRequestsQuery = `
-  query getPullRequest($owner: String!, $repo: String!, $branch: String!) {
+  query getPullRequest($owner: String!, $repo: String!, $branch: String!, $headRef: String!) {
     repository(owner: $owner, name: $repo, followRenames: true) {
       pullRequests(states: OPEN, first: 100, baseRefName: $branch) {
         edges {
@@ -26,6 +26,11 @@ export const getPullRequestsQuery = `
                 name
               }
             }
+            headRef{
+              compare(headRef: $headRef) {
+                aheadBy
+              }
+            }
             id
             headRefOid
           }
@@ -41,7 +46,7 @@ export const getPullRequestsQuery = `
  * @since merge-info-preview is in preview, we need to pass the custom media type header to the graphql api.
  */
 export const getAllPullRequestsQuery = `
-  query getPullRequest($owner: String!, $repo: String!) {
+  query getPullRequest($owner: String!, $repo: String!, $headRef: String!) {
     repository(owner: $owner, name: $repo, followRenames: true) {
       pullRequests(states: OPEN, first: 100) {
         edges {
@@ -59,6 +64,11 @@ export const getAllPullRequestsQuery = `
             labels(first: 100) {
               nodes {
                 name
+              }
+            }
+            headRef{
+              compare(headRef: $headRef) {
+                aheadBy
               }
             }
             id

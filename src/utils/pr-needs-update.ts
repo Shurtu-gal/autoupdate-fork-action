@@ -11,6 +11,12 @@ export const prNeedsUpdate = (
   pullRequest: PullRequest,
   environment: IEnvironment
 ): boolean => {
+  // Checks if the pull_request base branch is ahead of the head branch a.k.a. if the pull_request needs to be updated
+  if (pullRequest.headRef.compare.aheadBy === 0) {
+    core.info(`Pull request ${pullRequest.number} is up to date`);
+    return false;
+  }
+
   if (pullRequest.mergeable === mergeableState.CONFLICTING) {
     // TODO: Add comment to PR if merge conflict action is comment
     core.error(`Pull request ${pullRequest.number} has conflicts`);

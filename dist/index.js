@@ -31789,8 +31789,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const pr_needs_update_1 = __nccwpck_require__(5926);
 async function updatePullRequest(octokit, pullRequest, environment) {
     core.startGroup(`Updating pull request ${pullRequest.number}`);
-    const { node_id } = pullRequest;
-    const pullRequestNode = await (0, api_calls_1.getPullRequest)(octokit, node_id, environment.githubRestApiUrl);
+    const pullRequestNode = await (0, api_calls_1.getPullRequest)(octokit, pullRequest, environment.githubRestApiUrl);
     core.debug(`Pull request payload: ${JSON.stringify(pullRequest, null, 2)}`);
     if (!pullRequestNode) {
         core.error(`Failed to get pull request ${pullRequest.number}`);
@@ -31835,7 +31834,7 @@ exports.updatePullRequestBranchMutation = `
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getPullRequestQuery = void 0;
 exports.getPullRequestQuery = `
-  query getPullRequest($nodeId: ID!) {
+  query getPullRequest($nodeId: ID!, $headRef: String!) {
     node(id: $nodeId) {
       ... on PullRequest {
         number
@@ -31851,6 +31850,11 @@ exports.getPullRequestQuery = `
         labels(first: 100) {
           nodes {
             name
+          }
+        }
+        headRef{
+          compare(headRef: $headRef) {
+            aheadBy
           }
         }
         id
@@ -31876,7 +31880,7 @@ exports.getAllPullRequestsQuery = exports.getPullRequestsQuery = void 0;
  * @since merge-info-preview is in preview, we need to pass the custom media type header to the graphql api.
  */
 exports.getPullRequestsQuery = `
-  query getPullRequest($owner: String!, $repo: String!, $branch: String!) {
+  query getPullRequest($owner: String!, $repo: String!, $branch: String!, $headRef: String!) {
     repository(owner: $owner, name: $repo, followRenames: true) {
       pullRequests(states: OPEN, first: 100, baseRefName: $branch) {
         edges {
@@ -31896,6 +31900,11 @@ exports.getPullRequestsQuery = `
                 name
               }
             }
+            headRef{
+              compare(headRef: $headRef) {
+                aheadBy
+              }
+            }
             id
             headRefOid
           }
@@ -31910,7 +31919,7 @@ exports.getPullRequestsQuery = `
  * @since merge-info-preview is in preview, we need to pass the custom media type header to the graphql api.
  */
 exports.getAllPullRequestsQuery = `
-  query getPullRequest($owner: String!, $repo: String!) {
+  query getPullRequest($owner: String!, $repo: String!, $headRef: String!) {
     repository(owner: $owner, name: $repo, followRenames: true) {
       pullRequests(states: OPEN, first: 100) {
         edges {
@@ -31928,6 +31937,11 @@ exports.getAllPullRequestsQuery = `
             labels(first: 100) {
               nodes {
                 name
+              }
+            }
+            headRef{
+              compare(headRef: $headRef) {
+                aheadBy
               }
             }
             id
@@ -32164,12 +32178,14 @@ const core = __importStar(__nccwpck_require__(2186));
 const pull_request_1 = __nccwpck_require__(1924);
 const pull_request_2 = __nccwpck_require__(5957);
 const node_1 = __nccwpck_require__(7637);
+const headRef = (owner, branch, repo) => `${owner}:${repo}:${branch}`;
 async function getPullRequestsOnBranch(octokit, branch, owner, repo, baseUrl) {
     core.debug(`Variables in getAllPullRequests: ${JSON.stringify({ owner, repo, baseUrl, branch }, null, 2)}`);
     const { repository } = (await octokit.graphql(pull_request_2.getPullRequestsQuery, {
         owner,
         repo,
         branch,
+        headRef: headRef(owner, branch, repo),
         baseUrl,
     }));
     const pulls = repository.pullRequests.edges.map(edge => edge.node);
@@ -32186,6 +32202,7 @@ async function getAllPullRequests(octokit, owner, repo, baseUrl) {
     const { repository } = (await octokit.graphql(pull_request_2.getAllPullRequestsQuery, {
         owner,
         repo,
+        headRef: headRef(owner, 'main', repo),
         baseUrl,
     }));
     const pulls = repository.pullRequests.edges.map(edge => edge.node);
@@ -32213,9 +32230,11 @@ async function updatePullRequest(octokit, pullRequest, baseUrl) {
     core.info(`Updated pull request ${pullRequest.number}`);
 }
 exports.updatePullRequest = updatePullRequest;
-async function getPullRequest(octokit, pullRequestId, baseUrl) {
+async function getPullRequest(octokit, pullRequest, baseUrl) {
+    const { base: { user, repo, ref }, } = pullRequest;
     const { node } = (await octokit.graphql(node_1.getPullRequestQuery, {
-        nodeId: pullRequestId,
+        nodeId: pullRequest.node_id,
+        headRef: headRef(user?.login || '', ref || '', repo?.name || ''),
         baseUrl,
     }));
     return node;
@@ -32279,6 +32298,11 @@ exports.prNeedsUpdate = void 0;
 const types_1 = __nccwpck_require__(5077);
 const core = __importStar(__nccwpck_require__(2186));
 const prNeedsUpdate = (pullRequest, environment) => {
+    // Checks if the pull_request base branch is ahead of the head branch a.k.a. if the pull_request needs to be updated
+    if (pullRequest.headRef.compare.aheadBy === 0) {
+        core.info(`Pull request ${pullRequest.number} is up to date`);
+        return false;
+    }
     if (pullRequest.mergeable === types_1.mergeableState.CONFLICTING) {
         // TODO: Add comment to PR if merge conflict action is comment
         core.error(`Pull request ${pullRequest.number} has conflicts`);

@@ -9,10 +9,9 @@ export async function updatePullRequest(
   environment: IEnvironment
 ) {
   core.startGroup(`Updating pull request ${pullRequest.number}`);
-  const { node_id } = pullRequest;
   const pullRequestNode = await getPullRequest(
     octokit,
-    node_id,
+    pullRequest,
     environment.githubRestApiUrl
   );
   core.debug(`Pull request payload: ${JSON.stringify(pullRequest, null, 2)}`);
