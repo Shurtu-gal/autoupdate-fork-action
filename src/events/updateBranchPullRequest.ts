@@ -13,6 +13,7 @@ export async function updatePullRequestsOnBranch(
   repo: string,
   environment: IEnvironment
 ) {
+  core.info(`Updating pull requests on branch ${branch}`);
   const pulls = await getPullRequestsOnBranch(
     octokit,
     branch,

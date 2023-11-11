@@ -21,13 +21,6 @@ export async function getPullRequestsOnBranch(
   repo: string,
   baseUrl: string
 ): Promise<PullRequest[]> {
-  const { repository } = (await octokit.graphql(getPullRequestsQuery, {
-    owner,
-    repo,
-    branch,
-    baseUrl,
-  })) as GetPullRequestsQueryResponse;
-
   core.debug(
     `Variables in getAllPullRequests: ${JSON.stringify(
       { owner, repo, baseUrl, branch },
@@ -35,6 +28,12 @@ export async function getPullRequestsOnBranch(
       2
     )}`
   );
+  const { repository } = (await octokit.graphql(getPullRequestsQuery, {
+    owner,
+    repo,
+    branch,
+    baseUrl,
+  })) as GetPullRequestsQueryResponse;
 
   const pulls = repository.pullRequests.edges.map(
     edge => edge.node

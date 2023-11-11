@@ -31700,6 +31700,7 @@ const api_calls_1 = __nccwpck_require__(3301);
 const core = __importStar(__nccwpck_require__(2186));
 const pr_needs_update_1 = __nccwpck_require__(5926);
 async function updatePullRequestsOnBranch(octokit, owner, branch, repo, environment) {
+    core.info(`Updating pull requests on branch ${branch}`);
     const pulls = await (0, api_calls_1.getPullRequestsOnBranch)(octokit, branch, owner, repo, environment.githubGraphqlApiUrl);
     core.debug(`Found ${pulls.length} pull requests on branch ${branch}`);
     pulls.forEach(async (pull) => {
@@ -32111,13 +32112,13 @@ const pull_request_1 = __nccwpck_require__(1924);
 const pull_request_2 = __nccwpck_require__(5957);
 const node_1 = __nccwpck_require__(7637);
 async function getPullRequestsOnBranch(octokit, branch, owner, repo, baseUrl) {
+    core.debug(`Variables in getAllPullRequests: ${JSON.stringify({ owner, repo, baseUrl, branch }, null, 2)}`);
     const { repository } = (await octokit.graphql(pull_request_2.getPullRequestsQuery, {
         owner,
         repo,
         branch,
         baseUrl,
     }));
-    core.debug(`Variables in getAllPullRequests: ${JSON.stringify({ owner, repo, baseUrl, branch }, null, 2)}`);
     const pulls = repository.pullRequests.edges.map(edge => edge.node);
     if (pulls.length === 0) {
         core.info(`No pull requests found on branch ${branch}`);
