@@ -1,7 +1,7 @@
 import { PullRequest } from 'src/types';
 
 export const getPullRequestQuery = `
-  query getPullRequest($nodeId: ID!) {
+  query getPullRequest($nodeId: ID!, $headRef: String!) {
     node(id: $nodeId) {
       ... on PullRequest {
         number
@@ -17,6 +17,11 @@ export const getPullRequestQuery = `
         labels(first: 100) {
           nodes {
             name
+          }
+        }
+        headRef{
+          compare(headRef: $headRef) {
+            aheadBy
           }
         }
         id

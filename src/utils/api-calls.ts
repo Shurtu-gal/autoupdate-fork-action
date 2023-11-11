@@ -14,6 +14,9 @@ import {
   getPullRequestQuery,
 } from 'src/graphql/queries/node';
 
+const headRef = (owner: string, branch: string, repo: string): string =>
+  `${owner}:${repo}:${branch}`;
+
 export async function getPullRequestsOnBranch(
   octokit: Octokit,
   branch: string,
@@ -32,6 +35,7 @@ export async function getPullRequestsOnBranch(
     owner,
     repo,
     branch,
+    headRef: headRef(owner, branch, repo),
     baseUrl,
   })) as GetPullRequestsQueryResponse;
 
@@ -59,6 +63,7 @@ export async function getAllPullRequests(
   const { repository } = (await octokit.graphql(getAllPullRequestsQuery, {
     owner,
     repo,
+    headRef: headRef(owner, 'main', repo),
     baseUrl,
   })) as GetPullRequestsQueryResponse;
 
@@ -100,11 +105,15 @@ export async function updatePullRequest(
 
 export async function getPullRequest(
   octokit: Octokit,
-  pullRequestId: string,
+  pullRequest: RestPullRequest,
   baseUrl: string
 ): Promise<PullRequest | undefined> {
+  const {
+    base: { user, repo, ref },
+  } = pullRequest;
   const { node } = (await octokit.graphql(getPullRequestQuery, {
-    nodeId: pullRequestId,
+    nodeId: pullRequest.node_id,
+    headRef: headRef(user?.login || '', ref || '', repo?.name || ''),
     baseUrl,
   })) as GetPullRequestResponse;
 
