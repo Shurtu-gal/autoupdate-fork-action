@@ -38,6 +38,11 @@ export type PullRequest = {
       login: string;
     };
   };
+  labels: {
+    nodes: {
+      name: string;
+    }[];
+  };
 };
 
 export type RestPullRequest = Awaited<
@@ -75,6 +80,7 @@ export interface IEnvironment {
   githubGraphqlApiUrl: string;
   githubToken: string;
   prFilter: EnumPRFilter;
+  baseBranches: string[];
   prReadyState: EnumPRReadyState;
   prLabels: string[];
   excludePrLabels: string[];

@@ -1,4 +1,5 @@
 import {
+  EnumPRFilter,
   IEnvironment,
   PullRequest,
   mergeStateStatus,
@@ -10,12 +11,46 @@ export const prNeedsUpdate = (
   pullRequest: PullRequest,
   environment: IEnvironment
 ): boolean => {
-  if (
-    pullRequest.mergeable === mergeableState.UNKNOWN ||
-    pullRequest.mergeable === mergeableState.CONFLICTING
-  ) {
+  if (pullRequest.mergeable === mergeableState.CONFLICTING) {
+    // TODO: Add comment to PR if merge conflict action is comment
+    core.error(`Pull request ${pullRequest.number} has conflicts`);
+    return false;
+  }
+
+  if (pullRequest.mergeable === mergeableState.UNKNOWN) {
     core.error(
-      `Pull request ${pullRequest.number} mergeable state is unknown or conflicting. Try again later`
+      `Pull request ${pullRequest.number} mergeable state is unknown. Try again later`
+    );
+    return false;
+  }
+
+  const { excludePrLabels, prFilter, prLabels } = environment;
+
+  if (prFilter === EnumPRFilter.Base) {
+    if (!environment.baseBranches.includes(pullRequest.baseRefName)) {
+      core.info(
+        `Pull request ${pullRequest.number} is not based on any of the specified base branches`
+      );
+      return false;
+    }
+  } else if (prFilter === EnumPRFilter.Labelled) {
+    if (
+      !prLabels.some(label =>
+        pullRequest.labels.nodes.some(node => node.name === label)
+      )
+    ) {
+      core.info(
+        `Pull request ${pullRequest.number} does not have any of the specified labels`
+      );
+      return false;
+    }
+  } else if (
+    excludePrLabels.some(label =>
+      pullRequest.labels.nodes.some(node => node.name === label)
+    )
+  ) {
+    core.info(
+      `Pull request ${pullRequest.number} has one of the specified excluded labels`
     );
     return false;
   }

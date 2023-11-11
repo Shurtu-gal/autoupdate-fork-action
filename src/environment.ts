@@ -58,6 +58,12 @@ export function setupEnvironment(): IEnvironment {
       undefined,
       EnumPRFilter
     );
+    const baseBranches = getValueFromInput<string[]>(
+      'base_branch',
+      false,
+      [],
+      commaSeparatedStringToArray
+    );
     const prReadyState = getValueFromInput<EnumPRReadyState>(
       'pr_ready_state',
       false,
@@ -105,6 +111,7 @@ export function setupEnvironment(): IEnvironment {
       githubRestApiUrl,
       githubGraphqlApiUrl,
       githubToken,
+      baseBranches,
       prFilter,
       prReadyState,
       prLabels,

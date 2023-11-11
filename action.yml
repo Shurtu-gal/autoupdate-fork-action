@@ -14,6 +14,12 @@ inputs:
       Provide token of the user that has rights to push to the repos that this action is suppose to update. Suggestions: Create a bot user and give it write access to the repos.
     required: true
   
+  base_branches:
+    description: >
+      The comma-separated list of base branches on which pull requests should be updated.
+    required: false
+    default: 'master, main'
+
   pr_filter:
     description: >
       Controls how autoupdate chooses which pull requests to operate on.

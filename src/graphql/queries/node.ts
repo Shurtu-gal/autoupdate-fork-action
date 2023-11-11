@@ -14,6 +14,11 @@ export const getPullRequestQuery = `
             login
           }
         }
+        labels(first: 100) {
+          nodes {
+            name
+          }
+        }
         id
         headRefOid
       }
