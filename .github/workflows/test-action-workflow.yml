@@ -27,7 +27,7 @@ jobs:
       - name: Debug Action
         uses: ./
         with:
-          github_token: ${{ secrets.BOT_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           pr_filter: ${{ github.event.inputs.pr_filter || 'all' }}
           pr_label: 'autoupdate'
           pr_ready_state: 'all'
