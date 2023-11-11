@@ -21,7 +21,7 @@ export async function getPullRequestsOnBranch(
   repo: string,
   baseUrl: string
 ): Promise<PullRequest[]> {
-  const { repository } = (await octokit.graphql(getPullRequestQuery, {
+  const { repository } = (await octokit.graphql(getPullRequestsQuery, {
     owner,
     repo,
     branch,
@@ -96,7 +96,7 @@ export async function getPullRequest(
   pullRequestId: string,
   baseUrl: string
 ): Promise<PullRequest | undefined> {
-  const { node } = (await octokit.graphql(getPullRequestsQuery, {
+  const { node } = (await octokit.graphql(getPullRequestQuery, {
     nodeId: pullRequestId,
     baseUrl,
   })) as GetPullRequestResponse;

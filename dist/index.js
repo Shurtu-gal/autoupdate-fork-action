@@ -32109,7 +32109,7 @@ const pull_request_1 = __nccwpck_require__(1924);
 const pull_request_2 = __nccwpck_require__(5957);
 const node_1 = __nccwpck_require__(7637);
 async function getPullRequestsOnBranch(octokit, branch, owner, repo, baseUrl) {
-    const { repository } = (await octokit.graphql(node_1.getPullRequestQuery, {
+    const { repository } = (await octokit.graphql(pull_request_2.getPullRequestsQuery, {
         owner,
         repo,
         branch,
@@ -32157,7 +32157,7 @@ async function updatePullRequest(octokit, pullRequest, baseUrl) {
 }
 exports.updatePullRequest = updatePullRequest;
 async function getPullRequest(octokit, pullRequestId, baseUrl) {
-    const { node } = (await octokit.graphql(pull_request_2.getPullRequestsQuery, {
+    const { node } = (await octokit.graphql(node_1.getPullRequestQuery, {
         nodeId: pullRequestId,
         baseUrl,
     }));

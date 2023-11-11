@@ -6,7 +6,7 @@ import * as github from '@actions/github';
 import { retry } from '@octokit/plugin-retry';
 import { setupEnvironment } from './environment';
 import { updatePullRequest } from './events/updatePullRequest';
-import { PullRequest, RestPullRequest } from './types';
+import { RestPullRequest } from './types';
 import { updatePullRequestsOnBranch } from './events/updateBranchPullRequest';
 import { updateAllBranches } from './events/updateAllBranches';
 
