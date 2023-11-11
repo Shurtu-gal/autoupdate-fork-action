@@ -18,7 +18,7 @@ export async function updatePullRequestsOnBranch(
     branch,
     owner,
     repo,
-    environment.githubApiUrl
+    environment.githubGraphqlApiUrl
   );
 
   core.debug(`Found ${pulls.length} pull requests on branch ${branch}`);
@@ -27,7 +27,7 @@ export async function updatePullRequestsOnBranch(
     core.startGroup(`Updating pull request ${pull.number}`);
     core.debug(`Pull request payload: ${JSON.stringify(pull, null, 2)}`);
     if (prNeedsUpdate(pull, environment)) {
-      await updatePullRequest(octokit, pull, environment.githubApiUrl);
+      await updatePullRequest(octokit, pull, environment.githubGraphqlApiUrl);
     }
     core.endGroup();
   });

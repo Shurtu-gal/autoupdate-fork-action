@@ -46,7 +46,7 @@ export async function run(): Promise<void> {
     const octokit = github.getOctokit(
       environment.githubToken,
       {
-        baseUrl: environment.githubApiUrl,
+        baseUrl: environment.githubGraphqlApiUrl,
         previews: ['merge-info-preview'],
       },
       retry

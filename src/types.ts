@@ -71,7 +71,8 @@ export enum EnumMergeMethod {
 }
 
 export interface IEnvironment {
-  githubApiUrl: string;
+  githubRestApiUrl: string;
+  githubGraphqlApiUrl: string;
   githubToken: string;
   prFilter: EnumPRFilter;
   prReadyState: EnumPRReadyState;

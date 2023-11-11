@@ -31622,9 +31622,11 @@ function setupEnvironment() {
         const mergeConflictAction = getValueFromInput('merge_conflict_action', false, types_1.EnumMergeConflictAction.Fail, undefined, types_1.EnumMergeConflictAction);
         const mergeMethod = getValueFromInput('merge_method', false, types_1.EnumMergeMethod.Merge, undefined, types_1.EnumMergeMethod);
         const mergeCommitMessage = getValueFromInput('merge_commit_message', false, '');
-        const githubApiUrl = process.env.GITHUB_API_URL || 'https://api.github.com';
+        const githubRestApiUrl = process.env.GITHUB_API_URL || 'https://api.github.com';
+        const githubGraphqlApiUrl = process.env.GITHUB_GRAPHQL_URL || 'https://api.github.com/graphql';
         return {
-            githubApiUrl,
+            githubRestApiUrl,
+            githubGraphqlApiUrl,
             githubToken,
             prFilter,
             prReadyState,
@@ -31698,13 +31700,13 @@ const api_calls_1 = __nccwpck_require__(3301);
 const core = __importStar(__nccwpck_require__(2186));
 const pr_needs_update_1 = __nccwpck_require__(5926);
 async function updatePullRequestsOnBranch(octokit, owner, branch, repo, environment) {
-    const pulls = await (0, api_calls_1.getPullRequestsOnBranch)(octokit, branch, owner, repo, environment.githubApiUrl);
+    const pulls = await (0, api_calls_1.getPullRequestsOnBranch)(octokit, branch, owner, repo, environment.githubGraphqlApiUrl);
     core.debug(`Found ${pulls.length} pull requests on branch ${branch}`);
     pulls.forEach(async (pull) => {
         core.startGroup(`Updating pull request ${pull.number}`);
         core.debug(`Pull request payload: ${JSON.stringify(pull, null, 2)}`);
         if ((0, pr_needs_update_1.prNeedsUpdate)(pull, environment)) {
-            await (0, api_calls_1.updatePullRequest)(octokit, pull, environment.githubApiUrl);
+            await (0, api_calls_1.updatePullRequest)(octokit, pull, environment.githubGraphqlApiUrl);
         }
         core.endGroup();
     });
@@ -31750,14 +31752,14 @@ const pr_needs_update_1 = __nccwpck_require__(5926);
 async function updatePullRequest(octokit, pullRequest, environment) {
     core.startGroup(`Updating pull request ${pullRequest.number}`);
     const { node_id } = pullRequest;
-    const pullRequestNode = await (0, api_calls_1.getPullRequest)(octokit, node_id, environment.githubApiUrl);
+    const pullRequestNode = await (0, api_calls_1.getPullRequest)(octokit, node_id, environment.githubGraphqlApiUrl);
     core.debug(`Pull request payload: ${JSON.stringify(pullRequest, null, 2)}`);
     if (!pullRequestNode) {
         core.error(`Failed to get pull request ${pullRequest.number}`);
         return;
     }
     if ((0, pr_needs_update_1.prNeedsUpdate)(pullRequestNode, environment)) {
-        await (0, api_calls_1.updateRestPullRequest)(octokit, pullRequest, environment.githubApiUrl);
+        await (0, api_calls_1.updateRestPullRequest)(octokit, pullRequest, environment.githubGraphqlApiUrl);
     }
     core.endGroup();
     return;
@@ -31956,7 +31958,7 @@ async function run() {
     try {
         const environment = (0, environment_1.setupEnvironment)();
         const octokit = github.getOctokit(environment.githubToken, {
-            baseUrl: environment.githubApiUrl,
+            baseUrl: environment.githubGraphqlApiUrl,
             previews: ['merge-info-preview'],
         }, plugin_retry_1.retry);
         const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
