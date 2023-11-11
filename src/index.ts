@@ -38,7 +38,7 @@ export async function run(): Promise<void> {
     core.setFailed(`Unsupported event: ${triggerEventName}`);
     return;
   }
-
+  core.debug(`Process env: ${JSON.stringify(process.env, null, 2)}`);
   core.debug(`Event payload: ${JSON.stringify(eventPayload, null, 2)}`);
 
   try {

@@ -31955,6 +31955,7 @@ async function run() {
         core.setFailed(`Unsupported event: ${triggerEventName}`);
         return;
     }
+    core.debug(`Process env: ${JSON.stringify(process.env, null, 2)}`);
     core.debug(`Event payload: ${JSON.stringify(eventPayload, null, 2)}`);
     try {
         const environment = (0, environment_1.setupEnvironment)();
@@ -31963,7 +31964,7 @@ async function run() {
             previews: ['merge-info-preview'],
         }, plugin_retry_1.retry);
         const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
-        const branch = process.env.GITHUB_HEAD_REF;
+        const branch = process.env.GITHUB_REF_NAME;
         switch (triggerEventName) {
             case 'pull_request':
             case 'pull_request_target':
