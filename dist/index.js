@@ -31701,13 +31701,13 @@ const core = __importStar(__nccwpck_require__(2186));
 const pr_needs_update_1 = __nccwpck_require__(5926);
 async function updatePullRequestsOnBranch(octokit, owner, branch, repo, environment) {
     core.info(`Updating pull requests on branch ${branch}`);
-    const pulls = await (0, api_calls_1.getPullRequestsOnBranch)(octokit, branch, owner, repo, environment.githubGraphqlApiUrl);
+    const pulls = await (0, api_calls_1.getPullRequestsOnBranch)(octokit, branch, owner, repo, environment.githubRestApiUrl);
     core.debug(`Found ${pulls.length} pull requests on branch ${branch}`);
     pulls.forEach(async (pull) => {
         core.startGroup(`Updating pull request ${pull.number}`);
         core.debug(`Pull request payload: ${JSON.stringify(pull, null, 2)}`);
         if ((0, pr_needs_update_1.prNeedsUpdate)(pull, environment)) {
-            await (0, api_calls_1.updatePullRequest)(octokit, pull, environment.githubGraphqlApiUrl);
+            await (0, api_calls_1.updatePullRequest)(octokit, pull, environment.githubRestApiUrl);
         }
         core.endGroup();
     });
@@ -31753,14 +31753,14 @@ const pr_needs_update_1 = __nccwpck_require__(5926);
 async function updatePullRequest(octokit, pullRequest, environment) {
     core.startGroup(`Updating pull request ${pullRequest.number}`);
     const { node_id } = pullRequest;
-    const pullRequestNode = await (0, api_calls_1.getPullRequest)(octokit, node_id, environment.githubGraphqlApiUrl);
+    const pullRequestNode = await (0, api_calls_1.getPullRequest)(octokit, node_id, environment.githubRestApiUrl);
     core.debug(`Pull request payload: ${JSON.stringify(pullRequest, null, 2)}`);
     if (!pullRequestNode) {
         core.error(`Failed to get pull request ${pullRequest.number}`);
         return;
     }
     if ((0, pr_needs_update_1.prNeedsUpdate)(pullRequestNode, environment)) {
-        await (0, api_calls_1.updateRestPullRequest)(octokit, pullRequest, environment.githubGraphqlApiUrl);
+        await (0, api_calls_1.updateRestPullRequest)(octokit, pullRequest, environment.githubRestApiUrl);
     }
     core.endGroup();
     return;
@@ -31960,7 +31960,7 @@ async function run() {
     try {
         const environment = (0, environment_1.setupEnvironment)();
         const octokit = github.getOctokit(environment.githubToken, {
-            baseUrl: environment.githubGraphqlApiUrl,
+            baseUrl: environment.githubRestApiUrl,
             previews: ['merge-info-preview'],
         }, plugin_retry_1.retry);
         const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
@@ -32236,6 +32236,7 @@ const prNeedsUpdate = (pullRequest, environment) => {
         case types_1.mergeStateStatus.BEHIND:
         case types_1.mergeStateStatus.CLEAN:
         case types_1.mergeStateStatus.HAS_HOOKS:
+        case types_1.mergeStateStatus.UNSTABLE:
             return true;
         case types_1.mergeStateStatus.BLOCKED:
             core.error(`Pull request ${pullRequest.number} is blocked`);
@@ -32247,8 +32248,12 @@ const prNeedsUpdate = (pullRequest, environment) => {
             core.error(`Pull request ${pullRequest.number} is a draft`);
             return false;
         case types_1.mergeStateStatus.UNKNOWN:
-        case types_1.mergeStateStatus.UNSTABLE:
-            core.error(`Pull request ${pullRequest.number} merge state is unknown or unstable. Try again later`);
+        // case mergeStateStatus.UNSTABLE:
+        //   core.error(
+        //     `Pull request ${pullRequest.number} merge state is unknown or unstable. Try again later`
+        //   );
+        //   return false;
+        default:
             return false;
     }
 };

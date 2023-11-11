@@ -13,7 +13,7 @@ export async function updatePullRequest(
   const pullRequestNode = await getPullRequest(
     octokit,
     node_id,
-    environment.githubGraphqlApiUrl
+    environment.githubRestApiUrl
   );
   core.debug(`Pull request payload: ${JSON.stringify(pullRequest, null, 2)}`);
   if (!pullRequestNode) {
@@ -25,7 +25,7 @@ export async function updatePullRequest(
     await updateRestPullRequest(
       octokit,
       pullRequest,
-      environment.githubGraphqlApiUrl
+      environment.githubRestApiUrl
     );
   }
 
