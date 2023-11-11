@@ -21,6 +21,11 @@ export const getPullRequestsQuery = `
                 login
               }
             }
+            labels(first: 100) {
+              nodes {
+                name
+              }
+            }
             id
             headRefOid
           }
@@ -49,6 +54,11 @@ export const getAllPullRequestsQuery = `
               name
               owner {
                 login
+              }
+            }
+            labels(first: 100) {
+              nodes {
+                name
               }
             }
             id

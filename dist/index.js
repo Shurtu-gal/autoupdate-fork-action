@@ -31616,6 +31616,7 @@ function setupEnvironment() {
     try {
         const githubToken = core.getInput('github_token', { required: true });
         const prFilter = getValueFromInput('pr_filter', false, types_1.EnumPRFilter.All, undefined, types_1.EnumPRFilter);
+        const baseBranches = getValueFromInput('base_branch', false, [], commaSeparatedStringToArray);
         const prReadyState = getValueFromInput('pr_ready_state', false, types_1.EnumPRReadyState.All, undefined, types_1.EnumPRReadyState);
         const prLabels = getValueFromInput('pr_label', false, [], commaSeparatedStringToArray);
         const excludePrLabels = getValueFromInput('exclude_pr_label', false, [], commaSeparatedStringToArray);
@@ -31628,6 +31629,7 @@ function setupEnvironment() {
             githubRestApiUrl,
             githubGraphqlApiUrl,
             githubToken,
+            baseBranches,
             prFilter,
             prReadyState,
             prLabels,
@@ -31650,16 +31652,51 @@ exports.setupEnvironment = setupEnvironment;
 /***/ }),
 
 /***/ 6971:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.updateAllBranches = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const api_calls_1 = __nccwpck_require__(3301);
+const pr_needs_update_1 = __nccwpck_require__(5926);
 async function updateAllBranches(octokit, owner, repo, environment) {
-    console.log('updateAllBranches');
-    console.log(owner);
-    console.log(repo);
+    core.info(`Getting all branches for ${owner}/${repo}`);
+    const pulls = await (0, api_calls_1.getAllPullRequests)(octokit, owner, repo, environment.githubRestApiUrl);
+    core.debug(`Found ${pulls.length} pull requests`);
+    pulls.forEach(async (pull) => {
+        core.startGroup(`Updating pull request ${pull.number}`);
+        core.debug(`Pull request payload: ${JSON.stringify(pull, null, 2)}`);
+        if ((0, pr_needs_update_1.prNeedsUpdate)(pull, environment)) {
+            await (0, api_calls_1.updatePullRequest)(octokit, pull, environment.githubRestApiUrl);
+        }
+        core.endGroup();
+    });
+    core.info('All branches updated');
 }
 exports.updateAllBranches = updateAllBranches;
 
@@ -31811,6 +31848,11 @@ exports.getPullRequestQuery = `
             login
           }
         }
+        labels(first: 100) {
+          nodes {
+            name
+          }
+        }
         id
         headRefOid
       }
@@ -31849,6 +31891,11 @@ exports.getPullRequestsQuery = `
                 login
               }
             }
+            labels(first: 100) {
+              nodes {
+                name
+              }
+            }
             id
             headRefOid
           }
@@ -31876,6 +31923,11 @@ exports.getAllPullRequestsQuery = `
               name
               owner {
                 login
+              }
+            }
+            labels(first: 100) {
+              nodes {
+                name
               }
             }
             id
@@ -32227,9 +32279,30 @@ exports.prNeedsUpdate = void 0;
 const types_1 = __nccwpck_require__(5077);
 const core = __importStar(__nccwpck_require__(2186));
 const prNeedsUpdate = (pullRequest, environment) => {
-    if (pullRequest.mergeable === types_1.mergeableState.UNKNOWN ||
-        pullRequest.mergeable === types_1.mergeableState.CONFLICTING) {
-        core.error(`Pull request ${pullRequest.number} mergeable state is unknown or conflicting. Try again later`);
+    if (pullRequest.mergeable === types_1.mergeableState.CONFLICTING) {
+        // TODO: Add comment to PR if merge conflict action is comment
+        core.error(`Pull request ${pullRequest.number} has conflicts`);
+        return false;
+    }
+    if (pullRequest.mergeable === types_1.mergeableState.UNKNOWN) {
+        core.error(`Pull request ${pullRequest.number} mergeable state is unknown. Try again later`);
+        return false;
+    }
+    const { excludePrLabels, prFilter, prLabels } = environment;
+    if (prFilter === types_1.EnumPRFilter.Base) {
+        if (!environment.baseBranches.includes(pullRequest.baseRefName)) {
+            core.info(`Pull request ${pullRequest.number} is not based on any of the specified base branches`);
+            return false;
+        }
+    }
+    else if (prFilter === types_1.EnumPRFilter.Labelled) {
+        if (!prLabels.some(label => pullRequest.labels.nodes.some(node => node.name === label))) {
+            core.info(`Pull request ${pullRequest.number} does not have any of the specified labels`);
+            return false;
+        }
+    }
+    else if (excludePrLabels.some(label => pullRequest.labels.nodes.some(node => node.name === label))) {
+        core.info(`Pull request ${pullRequest.number} has one of the specified excluded labels`);
         return false;
     }
     switch (pullRequest.mergeStateStatus) {
