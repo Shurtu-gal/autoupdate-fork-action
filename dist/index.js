@@ -32131,6 +32131,7 @@ async function getAllPullRequests(octokit, owner, repo, baseUrl) {
         repo,
         baseUrl,
     }));
+    core.debug(`Variables in getAllPullRequests: ${JSON.stringify({ owner, repo, baseUrl }, null, 2)}`);
     const pulls = repository.pullRequests.edges.map(edge => edge.node);
     if (pulls.length === 0) {
         core.info(`No pull requests found`);
