@@ -53,7 +53,7 @@ export async function run(): Promise<void> {
     );
 
     const [owner, repo] = process.env.GITHUB_REPOSITORY!.split('/');
-    const branch = process.env.GITHUB_HEAD_REF!;
+    const branch = process.env.GITHUB_REF_NAME!;
 
     switch (triggerEventName) {
       case 'pull_request':
