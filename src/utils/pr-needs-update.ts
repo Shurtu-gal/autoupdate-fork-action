@@ -24,6 +24,7 @@ export const prNeedsUpdate = (
     case mergeStateStatus.BEHIND:
     case mergeStateStatus.CLEAN:
     case mergeStateStatus.HAS_HOOKS:
+    case mergeStateStatus.UNSTABLE:
       return true;
     case mergeStateStatus.BLOCKED:
       core.error(`Pull request ${pullRequest.number} is blocked`);
@@ -37,10 +38,12 @@ export const prNeedsUpdate = (
       core.error(`Pull request ${pullRequest.number} is a draft`);
       return false;
     case mergeStateStatus.UNKNOWN:
-    case mergeStateStatus.UNSTABLE:
-      core.error(
-        `Pull request ${pullRequest.number} merge state is unknown or unstable. Try again later`
-      );
+    // case mergeStateStatus.UNSTABLE:
+    //   core.error(
+    //     `Pull request ${pullRequest.number} merge state is unknown or unstable. Try again later`
+    //   );
+    //   return false;
+    default:
       return false;
   }
 };
