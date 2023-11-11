@@ -31699,6 +31699,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const pr_needs_update_1 = __nccwpck_require__(5926);
 async function updatePullRequestsOnBranch(octokit, owner, branch, repo, environment) {
     const pulls = await (0, api_calls_1.getPullRequestsOnBranch)(octokit, branch, owner, repo, environment.githubApiUrl);
+    core.debug(`Found ${pulls.length} pull requests on branch ${branch}`);
     pulls.forEach(async (pull) => {
         core.startGroup(`Updating pull request ${pull.number}`);
         core.debug(`Pull request payload: ${JSON.stringify(pull, null, 2)}`);
@@ -32221,7 +32222,8 @@ exports.prNeedsUpdate = void 0;
 const types_1 = __nccwpck_require__(5077);
 const core = __importStar(__nccwpck_require__(2186));
 const prNeedsUpdate = (pullRequest, environment) => {
-    if (pullRequest.mergeable === types_1.mergeableState.UNKNOWN || pullRequest.mergeable === types_1.mergeableState.CONFLICTING) {
+    if (pullRequest.mergeable === types_1.mergeableState.UNKNOWN ||
+        pullRequest.mergeable === types_1.mergeableState.CONFLICTING) {
         core.error(`Pull request ${pullRequest.number} mergeable state is unknown or conflicting. Try again later`);
         return false;
     }

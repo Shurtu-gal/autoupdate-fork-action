@@ -9,7 +9,10 @@ import {
   getAllPullRequestsQuery,
   getPullRequestsQuery,
 } from '../graphql/queries/pull-request';
-import { GetPullRequestResponse, getPullRequestQuery } from 'src/graphql/queries/node';
+import {
+  GetPullRequestResponse,
+  getPullRequestQuery,
+} from 'src/graphql/queries/node';
 
 export async function getPullRequestsOnBranch(
   octokit: Octokit,

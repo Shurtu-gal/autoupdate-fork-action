@@ -1,4 +1,4 @@
-import { PullRequest } from "src/types";
+import { PullRequest } from 'src/types';
 
 export const getPullRequestQuery = `
   query getPullRequest($nodeId: ID!) {
@@ -23,4 +23,4 @@ export const getPullRequestQuery = `
 
 export type GetPullRequestResponse = {
   node: PullRequest;
-}
+};
