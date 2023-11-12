@@ -12,5 +12,7 @@ jobs:
       - name: Test
         uses: ./
         with:
-          token: ${{ secrets.BOT_TOKEN }}
+          # This is the token that is used to authenticate with the GitHub API
+          # If BOT_TOKEN is not set, the default GITHUB_TOKEN is used
+          token: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
 
