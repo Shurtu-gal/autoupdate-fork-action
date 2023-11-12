@@ -32047,7 +32047,7 @@ async function run() {
                 // Currently issue doesn't have all the fields we need. Hence have to make a separate call to get the pull request.
                 // https://github.com/actions/checkout/issues/331#issuecomment-897456260
                 core.debug('Getting pull request from issue');
-                const pull_request = fetch(eventPayload.issue?.pull_request?.url || '', {
+                const pull_request = await fetch(eventPayload.issue?.pull_request?.url || '', {
                     headers: {
                         Authorization: `token ${environment.githubToken}`,
                     },

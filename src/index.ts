@@ -84,7 +84,7 @@ export async function run(): Promise<void> {
         // Currently issue doesn't have all the fields we need. Hence have to make a separate call to get the pull request.
         // https://github.com/actions/checkout/issues/331#issuecomment-897456260
         core.debug('Getting pull request from issue');
-        const pull_request = fetch(
+        const pull_request = await fetch(
           (eventPayload.issue as RestIssue)?.pull_request?.url || '',
           {
             headers: {
