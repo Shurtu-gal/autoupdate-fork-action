@@ -31,6 +31,7 @@ export async function run(): Promise<void> {
       'push',
       'workflow_dispatch',
       'schedule',
+      'issue_comment',
     ].includes(triggerEventName || '')
   ) {
     core.info(`Triggered by ${triggerEventName} event`);
@@ -71,6 +72,19 @@ export async function run(): Promise<void> {
         await updatePullRequest(
           octokit,
           eventPayload.pull_request as RestPullRequest,
+          environment
+        );
+        break;
+
+      case 'issue_comment':
+        if (!eventPayload.issue) throw new Error('No issue found in payload');
+        core.debug(
+          `Issue payload: ${JSON.stringify(eventPayload.issue, null, 2)}`
+        );
+
+        await updatePullRequest(
+          octokit,
+          eventPayload.issue as RestPullRequest,
           environment
         );
         break;

@@ -1,0 +1,13 @@
+name: test comment
+on:
+  issue_comment:
+    types: [created]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get body of the comment
+        id: get_comment
+        run:  | 
+          echo "::set-output name=body::github.event.comment.body"
+          echo ${{ github.event.comment.body }}

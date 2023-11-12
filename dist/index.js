@@ -32014,6 +32014,7 @@ async function run() {
         'push',
         'workflow_dispatch',
         'schedule',
+        'issue_comment',
     ].includes(triggerEventName || '')) {
         core.info(`Triggered by ${triggerEventName} event`);
     }
@@ -32038,6 +32039,12 @@ async function run() {
                     throw new Error('No pull request found in payload');
                 core.debug(`Pull request payload: ${JSON.stringify(eventPayload.pull_request, null, 2)}`);
                 await (0, updatePullRequest_1.updatePullRequest)(octokit, eventPayload.pull_request, environment);
+                break;
+            case 'issue_comment':
+                if (!eventPayload.issue)
+                    throw new Error('No issue found in payload');
+                core.debug(`Issue payload: ${JSON.stringify(eventPayload.issue, null, 2)}`);
+                await (0, updatePullRequest_1.updatePullRequest)(octokit, eventPayload.issue, environment);
                 break;
             case 'push':
                 await (0, updateBranchPullRequest_1.updatePullRequestsOnBranch)(octokit, owner, branch, repo, environment);
