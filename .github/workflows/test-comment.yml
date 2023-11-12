@@ -5,9 +5,12 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    steps:
-      - name: Get body of the comment
-        id: get_comment
-        run:  | 
-          echo "::set-output name=body::github.event.comment.body"
-          echo ${{ github.event.comment.body }}
+    if: ${{ github.event.comment.body == '/update' }}
+    steps:      
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Test
+        uses: ./
+        with:
+          token: ${{ secrets.BOT_TOKEN }}
+
