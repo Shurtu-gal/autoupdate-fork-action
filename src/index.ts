@@ -84,18 +84,15 @@ export async function run(): Promise<void> {
         // Currently issue doesn't have all the fields we need. Hence have to make a separate call to get the pull request.
         // https://github.com/actions/checkout/issues/331#issuecomment-897456260
         core.debug('Getting pull request from issue');
-        const pull_request = await fetch(
-          (eventPayload.issue as RestIssue)?.pull_request?.url || '',
-          {
-            headers: {
-              Authorization: `Bearer ${environment.githubToken}`,
-            },
-          }
-        );
+        const pull_request = await octokit.rest.pulls.get({
+          owner,
+          repo,
+          pull_number: (eventPayload.issue as RestIssue).number,
+        });
         core.debug(`Pull request: ${JSON.stringify(pull_request, null, 2)}`);
         await updatePullRequest(
           octokit,
-          pull_request as unknown as RestPullRequest,
+          pull_request.data as RestPullRequest,
           environment
         );
         break;
