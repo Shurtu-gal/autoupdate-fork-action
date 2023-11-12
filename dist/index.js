@@ -32044,7 +32044,16 @@ async function run() {
                 if (!eventPayload.issue)
                     throw new Error('No issue found in payload');
                 core.debug(`Issue payload: ${JSON.stringify(eventPayload.issue, null, 2)}`);
-                await (0, updatePullRequest_1.updatePullRequest)(octokit, eventPayload.issue, environment);
+                // Currently issue doesn't have all the fields we need. Hence have to make a separate call to get the pull request.
+                // https://github.com/actions/checkout/issues/331#issuecomment-897456260
+                core.debug('Getting pull request from issue');
+                const pull_request = fetch(eventPayload.issue?.pull_request?.url || '', {
+                    headers: {
+                        Authorization: `token ${environment.githubToken}`,
+                    },
+                });
+                core.debug(`Pull request: ${JSON.stringify(pull_request, null, 2)}`);
+                await (0, updatePullRequest_1.updatePullRequest)(octokit, pull_request, environment);
                 break;
             case 'push':
                 await (0, updateBranchPullRequest_1.updatePullRequestsOnBranch)(octokit, owner, branch, repo, environment);

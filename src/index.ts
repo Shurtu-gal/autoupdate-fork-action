@@ -6,7 +6,7 @@ import * as github from '@actions/github';
 import { retry } from '@octokit/plugin-retry';
 import { setupEnvironment } from './environment';
 import { updatePullRequest } from './events/updatePullRequest';
-import { RestPullRequest } from './types';
+import { RestIssue, RestPullRequest } from './types';
 import { updatePullRequestsOnBranch } from './events/updateBranchPullRequest';
 import { updateAllBranches } from './events/updateAllBranches';
 
@@ -81,10 +81,21 @@ export async function run(): Promise<void> {
         core.debug(
           `Issue payload: ${JSON.stringify(eventPayload.issue, null, 2)}`
         );
-
+        // Currently issue doesn't have all the fields we need. Hence have to make a separate call to get the pull request.
+        // https://github.com/actions/checkout/issues/331#issuecomment-897456260
+        core.debug('Getting pull request from issue');
+        const pull_request = fetch(
+          (eventPayload.issue as RestIssue)?.pull_request?.url || '',
+          {
+            headers: {
+              Authorization: `token ${environment.githubToken}`,
+            },
+          }
+        );
+        core.debug(`Pull request: ${JSON.stringify(pull_request, null, 2)}`);
         await updatePullRequest(
           octokit,
-          eventPayload.issue as RestPullRequest,
+          pull_request as unknown as RestPullRequest,
           environment
         );
         break;
