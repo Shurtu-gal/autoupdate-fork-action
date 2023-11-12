@@ -88,7 +88,7 @@ export async function run(): Promise<void> {
           (eventPayload.issue as RestIssue)?.pull_request?.url || '',
           {
             headers: {
-              Authorization: `token ${environment.githubToken}`,
+              Authorization: `Bearer ${environment.githubToken}`,
             },
           }
         );

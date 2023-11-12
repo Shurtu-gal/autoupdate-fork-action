@@ -32049,7 +32049,7 @@ async function run() {
                 core.debug('Getting pull request from issue');
                 const pull_request = await fetch(eventPayload.issue?.pull_request?.url || '', {
                     headers: {
-                        Authorization: `token ${environment.githubToken}`,
+                        Authorization: `Bearer ${environment.githubToken}`,
                     },
                 });
                 core.debug(`Pull request: ${JSON.stringify(pull_request, null, 2)}`);
