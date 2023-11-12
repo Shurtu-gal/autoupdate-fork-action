@@ -11,13 +11,13 @@ on:
           - 'all'
           - 'labelled'
           - 'error'
-  pull_request:
-    types: [opened, labeled, unlabeled, synchronize, ready_for_review, reopened]
-  push:
-    branches:
-      - master
-      - main
-      - 'releases/*'
+  # pull_request:
+  #   types: [opened, labeled, unlabeled, synchronize, ready_for_review, reopened]
+  # push:
+  #   branches:
+  #     - master
+  #     - main
+  #     - 'releases/*'
 
 jobs:
   test:

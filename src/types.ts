@@ -54,6 +54,10 @@ export type RestPullRequest = Awaited<
   ReturnType<Octokit['rest']['pulls']['list']>
 >['data'][0];
 
+export type RestIssue = Awaited<
+  ReturnType<Octokit['rest']['issues']['get']>
+>['data'];
+
 export enum EnumPRFilter {
   All = 'all',
   Labelled = 'labelled',
