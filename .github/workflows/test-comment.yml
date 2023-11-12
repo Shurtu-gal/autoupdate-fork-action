@@ -3,7 +3,7 @@ on:
   issue_comment:
     types: [created]
 jobs:
-  test:
+  test-comment:
     runs-on: ubuntu-latest
     if: ${{ github.event.comment.body == '/update' }}
     steps:      
