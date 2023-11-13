@@ -1,4 +1,4 @@
-import { PullRequest } from 'src/types';
+import { PullRequest } from '../../types';
 
 /**
  * @description The graphql query to get all pull requests for a branch in a repository.

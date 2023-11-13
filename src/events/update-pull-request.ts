@@ -1,13 +1,13 @@
-import { IEnvironment, Octokit, RestPullRequest } from 'src/types';
-import { getPullRequest, updateRestPullRequest } from 'src/utils/api-calls';
+import { IEnvironment, Octokit, RestPullRequest } from '../types';
+import { getPullRequest, updateRestPullRequest } from '../utils/api-calls';
 import * as core from '@actions/core';
-import { prNeedsUpdate } from 'src/utils/pr-needs-update';
+import { prNeedsUpdate } from '../utils/pr-needs-update';
 
 export async function updatePullRequest(
   octokit: Octokit,
   pullRequest: RestPullRequest,
   environment: IEnvironment
-) {
+): Promise<void> {
   core.startGroup(`Updating pull request ${pullRequest.number}`);
   const pullRequestNode = await getPullRequest(
     octokit,

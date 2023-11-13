@@ -1,4 +1,4 @@
-import { mergeableState } from 'src/types';
+import { mergeableState } from '../../types';
 
 export const updatePullRequestBranchMutation = `
   mutation update($input: UpdatePullRequestBranchInput!) {

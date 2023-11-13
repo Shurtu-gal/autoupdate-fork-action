@@ -4,7 +4,7 @@ import {
   PullRequest,
   mergeStateStatus,
   mergeableState,
-} from 'src/types';
+} from '../types';
 import * as core from '@actions/core';
 
 export const prNeedsUpdate = (
@@ -79,11 +79,7 @@ export const prNeedsUpdate = (
       core.error(`Pull request ${pullRequest.number} is a draft`);
       return false;
     case mergeStateStatus.UNKNOWN:
-    // case mergeStateStatus.UNSTABLE:
-    //   core.error(
-    //     `Pull request ${pullRequest.number} merge state is unknown or unstable. Try again later`
-    //   );
-    //   return false;
+      return false;
     default:
       return false;
   }

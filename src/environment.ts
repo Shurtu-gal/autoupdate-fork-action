@@ -19,7 +19,7 @@ function getValueFromInput<Type>(
   required: boolean,
   defaultValue?: Type,
   parse?: (value: string) => Type,
-  enumeration?: any
+  enumeration?: unknown
 ): Type {
   try {
     const value = core.getInput(inputName, { required });

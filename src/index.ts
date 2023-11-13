@@ -5,10 +5,10 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { retry } from '@octokit/plugin-retry';
 import { setupEnvironment } from './environment';
-import { updatePullRequest } from './events/updatePullRequest';
+import { updatePullRequest } from './events/update-pull-request';
 import { RestIssue, RestPullRequest } from './types';
-import { updatePullRequestsOnBranch } from './events/updateBranchPullRequest';
-import { updateAllBranches } from './events/updateAllBranches';
+import { updatePullRequestsOnBranch } from './events/update-branch-pull-request';
+import { updateAllBranches } from './events/update-all-branches';
 
 const triggerEventName = process.env.GITHUB_EVENT_NAME;
 const eventPath = process.env.GITHUB_EVENT_PATH;
@@ -16,6 +16,7 @@ let eventPayload: Record<string, unknown> = {};
 
 if (eventPath) {
   // Get the JSON webhook payload for the event that triggered the workflow
+  // eslint-disable-next-line import/no-dynamic-require, @typescript-eslint/no-require-imports
   eventPayload = require(eventPath);
 }
 
@@ -53,8 +54,13 @@ export async function run(): Promise<void> {
       retry
     );
 
-    const [owner, repo] = process.env.GITHUB_REPOSITORY!.split('/');
-    const branch = process.env.GITHUB_REF_NAME!;
+    if (!process.env.GITHUB_REPOSITORY)
+      throw new Error('No repository found in payload');
+    const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+    if (!owner || !repo) throw new Error('No owner or repo found in payload');
+    if (!process.env.GITHUB_REF_NAME)
+      throw new Error('No branch found in payload');
+    const branch = process.env.GITHUB_REF_NAME;
 
     switch (triggerEventName) {
       case 'pull_request':
@@ -84,17 +90,19 @@ export async function run(): Promise<void> {
         // Currently issue doesn't have all the fields we need. Hence have to make a separate call to get the pull request.
         // https://github.com/actions/checkout/issues/331#issuecomment-897456260
         core.debug('Getting pull request from issue');
-        const pull_request = await octokit.rest.pulls.get({
-          owner,
-          repo,
-          pull_number: (eventPayload.issue as RestIssue).number,
-        });
-        core.debug(`Pull request: ${JSON.stringify(pull_request, null, 2)}`);
-        await updatePullRequest(
-          octokit,
-          pull_request.data as RestPullRequest,
-          environment
-        );
+        {
+          const pull_request = await octokit.rest.pulls.get({
+            owner,
+            repo,
+            pull_number: (eventPayload.issue as RestIssue).number,
+          });
+          core.debug(`Pull request: ${JSON.stringify(pull_request, null, 2)}`);
+          await updatePullRequest(
+            octokit,
+            pull_request.data as RestPullRequest,
+            environment
+          );
+        }
         break;
 
       case 'push':

@@ -1,4 +1,4 @@
-name: test comment
+name: Test Github Action on Comment
 on:
   issue_comment:
     types: [created]
