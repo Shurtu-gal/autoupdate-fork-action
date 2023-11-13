@@ -57,3 +57,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TYPESCRIPT_DEFAULT_STYLE: prettier
           VALIDATE_JSCPD: false
+          # Exclude dist folder
+          FILTER_REGEX_EXCLUDE: .*dist/.*
