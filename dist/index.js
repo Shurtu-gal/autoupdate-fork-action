@@ -31651,7 +31651,7 @@ exports.setupEnvironment = setupEnvironment;
 
 /***/ }),
 
-/***/ 6971:
+/***/ 9170:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -31703,7 +31703,7 @@ exports.updateAllBranches = updateAllBranches;
 
 /***/ }),
 
-/***/ 744:
+/***/ 1636:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -31754,7 +31754,7 @@ exports.updatePullRequestsOnBranch = updatePullRequestsOnBranch;
 
 /***/ }),
 
-/***/ 1328:
+/***/ 4558:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -31993,14 +31993,15 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const plugin_retry_1 = __nccwpck_require__(6298);
 const environment_1 = __nccwpck_require__(6869);
-const updatePullRequest_1 = __nccwpck_require__(1328);
-const updateBranchPullRequest_1 = __nccwpck_require__(744);
-const updateAllBranches_1 = __nccwpck_require__(6971);
+const update_pull_request_1 = __nccwpck_require__(4558);
+const update_branch_pull_request_1 = __nccwpck_require__(1636);
+const update_all_branches_1 = __nccwpck_require__(9170);
 const triggerEventName = process.env.GITHUB_EVENT_NAME;
 const eventPath = process.env.GITHUB_EVENT_PATH;
 let eventPayload = {};
 if (eventPath) {
     // Get the JSON webhook payload for the event that triggered the workflow
+    // eslint-disable-next-line import/no-dynamic-require, @typescript-eslint/no-require-imports
     eventPayload = require(eventPath);
 }
 /**
@@ -32030,7 +32031,13 @@ async function run() {
             baseUrl: environment.githubRestApiUrl,
             previews: ['merge-info-preview'],
         }, plugin_retry_1.retry);
+        if (!process.env.GITHUB_REPOSITORY)
+            throw new Error('No repository found in payload');
         const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+        if (!owner || !repo)
+            throw new Error('No owner or repo found in payload');
+        if (!process.env.GITHUB_REF_NAME)
+            throw new Error('No branch found in payload');
         const branch = process.env.GITHUB_REF_NAME;
         switch (triggerEventName) {
             case 'pull_request':
@@ -32038,7 +32045,7 @@ async function run() {
                 if (!eventPayload.pull_request)
                     throw new Error('No pull request found in payload');
                 core.debug(`Pull request payload: ${JSON.stringify(eventPayload.pull_request, null, 2)}`);
-                await (0, updatePullRequest_1.updatePullRequest)(octokit, eventPayload.pull_request, environment);
+                await (0, update_pull_request_1.updatePullRequest)(octokit, eventPayload.pull_request, environment);
                 break;
             case 'issue_comment':
                 if (!eventPayload.issue)
@@ -32047,22 +32054,24 @@ async function run() {
                 // Currently issue doesn't have all the fields we need. Hence have to make a separate call to get the pull request.
                 // https://github.com/actions/checkout/issues/331#issuecomment-897456260
                 core.debug('Getting pull request from issue');
-                const pull_request = await octokit.rest.pulls.get({
-                    owner,
-                    repo,
-                    pull_number: eventPayload.issue.number,
-                });
-                core.debug(`Pull request: ${JSON.stringify(pull_request, null, 2)}`);
-                await (0, updatePullRequest_1.updatePullRequest)(octokit, pull_request.data, environment);
+                {
+                    const pull_request = await octokit.rest.pulls.get({
+                        owner,
+                        repo,
+                        pull_number: eventPayload.issue.number,
+                    });
+                    core.debug(`Pull request: ${JSON.stringify(pull_request, null, 2)}`);
+                    await (0, update_pull_request_1.updatePullRequest)(octokit, pull_request.data, environment);
+                }
                 break;
             case 'push':
-                await (0, updateBranchPullRequest_1.updatePullRequestsOnBranch)(octokit, owner, branch, repo, environment);
+                await (0, update_branch_pull_request_1.updatePullRequestsOnBranch)(octokit, owner, branch, repo, environment);
                 break;
             case 'workflow_dispatch':
             case 'schedule':
                 if (!owner || !repo)
                     throw new Error('No owner or repo found in payload');
-                await (0, updateAllBranches_1.updateAllBranches)(octokit, owner, repo, environment);
+                await (0, update_all_branches_1.updateAllBranches)(octokit, owner, repo, environment);
                 break;
         }
         core.info('Done');
@@ -32153,7 +32162,10 @@ var EnumMergeMethod;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.isValueInEnum = void 0;
 function isValueInEnum(value, enumeration) {
-    return Object.values(enumeration).includes(value);
+    if (typeof enumeration !== 'object')
+        return false;
+    else
+        return Object.values(enumeration).includes(value);
 }
 exports.isValueInEnum = isValueInEnum;
 
@@ -32361,11 +32373,7 @@ const prNeedsUpdate = (pullRequest, environment) => {
             core.error(`Pull request ${pullRequest.number} is a draft`);
             return false;
         case types_1.mergeStateStatus.UNKNOWN:
-        // case mergeStateStatus.UNSTABLE:
-        //   core.error(
-        //     `Pull request ${pullRequest.number} merge state is unknown or unstable. Try again later`
-        //   );
-        //   return false;
+            return false;
         default:
             return false;
     }

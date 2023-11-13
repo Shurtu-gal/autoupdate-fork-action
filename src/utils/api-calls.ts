@@ -12,7 +12,7 @@ import {
 import {
   GetPullRequestResponse,
   getPullRequestQuery,
-} from 'src/graphql/queries/node';
+} from '../graphql/queries/node';
 
 const headRef = (owner: string, branch: string, repo: string): string =>
   `${owner}:${repo}:${branch}`;

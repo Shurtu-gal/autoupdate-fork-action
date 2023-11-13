@@ -1,4 +1,4 @@
-import { PullRequest } from 'src/types';
+import { PullRequest } from '../../types';
 
 export const getPullRequestQuery = `
   query getPullRequest($nodeId: ID!, $headRef: String!) {

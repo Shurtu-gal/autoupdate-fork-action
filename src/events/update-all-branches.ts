@@ -1,28 +1,23 @@
-import { IEnvironment, Octokit } from 'src/types';
-import {
-  getPullRequestsOnBranch,
-  updatePullRequest,
-} from 'src/utils/api-calls';
+import { IEnvironment, Octokit } from '../types';
 import * as core from '@actions/core';
-import { prNeedsUpdate } from 'src/utils/pr-needs-update';
+import { getAllPullRequests, updatePullRequest } from '../utils/api-calls';
+import { prNeedsUpdate } from '../utils/pr-needs-update';
 
-export async function updatePullRequestsOnBranch(
+export async function updateAllBranches(
   octokit: Octokit,
   owner: string,
-  branch: string,
   repo: string,
   environment: IEnvironment
-) {
-  core.info(`Updating pull requests on branch ${branch}`);
-  const pulls = await getPullRequestsOnBranch(
+): Promise<void> {
+  core.info(`Getting all branches for ${owner}/${repo}`);
+  const pulls = await getAllPullRequests(
     octokit,
-    branch,
     owner,
     repo,
     environment.githubRestApiUrl
   );
 
-  core.debug(`Found ${pulls.length} pull requests on branch ${branch}`);
+  core.debug(`Found ${pulls.length} pull requests`);
 
   pulls.forEach(async pull => {
     core.startGroup(`Updating pull request ${pull.number}`);
@@ -32,4 +27,6 @@ export async function updatePullRequestsOnBranch(
     }
     core.endGroup();
   });
+
+  core.info('All branches updated');
 }

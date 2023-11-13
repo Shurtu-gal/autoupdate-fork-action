@@ -1,3 +1,4 @@
-export function isValueInEnum(value: string, enumeration: any): boolean {
-  return Object.values(enumeration).includes(value);
+export function isValueInEnum(value: string, enumeration: unknown): boolean {
+  if (typeof enumeration !== 'object') return false;
+  else return Object.values(enumeration as object).includes(value);
 }

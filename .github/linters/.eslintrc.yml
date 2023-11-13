@@ -83,4 +83,5 @@ rules:
     '@typescript-eslint/type-annotation-spacing': 'error',
     '@typescript-eslint/unbound-method': 'error',
     'no-shadow': 'off',
+    'github/array-foreach': 'off'
   }
