@@ -64,3 +64,5 @@ jobs:
     uses: ./.github/workflows/test-action-workflow.yml
     secrets: inherit
     name: Github Action Tests
+    with:
+      pr_filter: 'labelled'
