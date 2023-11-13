@@ -24,7 +24,7 @@ inputs:
     description: >
       Controls how autoupdate chooses which pull requests to operate on.
       - all: Operate on all pull requests.
-      - labeled: Operate on pull requests with the specified label. If no label is specified, the default label is autoupdate.
+      - labelled: Operate on pull requests with the specified label. If no label is specified, the default label is autoupdate.
       - base: Operate on pull requests with the specified base branch.
       - protected: Operate on pull requests on protected branches.
       - auto_merge: Operate on pull requests with auto merge enabled.

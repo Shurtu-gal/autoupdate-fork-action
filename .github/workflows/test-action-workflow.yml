@@ -11,13 +11,34 @@ on:
           - 'all'
           - 'labelled'
           - 'error'
-  # pull_request:
-  #   types: [opened, labeled, unlabeled, synchronize, ready_for_review, reopened]
-  # push:
-  #   branches:
-  #     - master
-  #     - main
-  #     - 'releases/*'
+
+  workflow_call:
+    inputs:
+      pr_filter:
+        description: 'Filter PRs'
+        required: false
+        type: string
+        default: 'labelled'
+
+      pr_label:
+        description: 'PR Label'
+        required: false
+        type: string
+        default: 'test-autoupdate'
+
+      base_branchs:
+        description: 'Base Branches'
+        required: false
+        type: string
+        default: 'master,main'
+        
+  pull_request:
+    types: [opened, labeled, unlabeled, synchronize, ready_for_review, reopened]
+  push:
+    branches:
+      - master
+      - main
+      - 'releases/*'
 
 jobs:
   test:
