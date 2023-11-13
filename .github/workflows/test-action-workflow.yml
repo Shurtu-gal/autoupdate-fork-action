@@ -51,5 +51,5 @@ jobs:
           merge_conflict_action: 'fail'
           merge_method: 'merge'
           merge_commit_message: ''
-          base_branchs: ${{ github.event.inputs.base_branchs || 'master,main' }}
+          base_branches: ${{ github.event.inputs.base_branchs || 'master,main' }}
           
