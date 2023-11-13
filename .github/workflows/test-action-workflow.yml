@@ -33,12 +33,7 @@ on:
         default: 'master,main'
 
   pull_request:
-    types: [opened, labeled, unlabeled, synchronize, ready_for_review, reopened]
-  push:
-    branches:
-      - master
-      - main
-      - 'releases/*'
+    types: [opened, ready_for_review, reopened]
 
 jobs:
   test:
@@ -50,11 +45,11 @@ jobs:
         with:
           github_token: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN || github.token }}
           pr_filter: ${{ github.event.inputs.pr_filter || 'all' }}
-          pr_label: 'autoupdate'
+          pr_label: 'test-autoupdate'
           pr_ready_state: 'all'
           exclude_pr_label: ''
           merge_conflict_action: 'fail'
           merge_method: 'merge'
           merge_commit_message: ''
-
+          base_branchs: ${{ github.event.inputs.base_branchs || 'master,main' }}
           
