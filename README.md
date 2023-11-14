@@ -6,3 +6,4 @@
 [![CodeQL](https://github.com/Shurtu-gal/autoupdate-fork-action/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Shurtu-gal/autoupdate-fork-action/actions/workflows/codeql-analysis.yml)
 [![Coverage](./badges/coverage.svg)](./badges/coverage.svg)
 
+## Just for forwarding the branch and test it
