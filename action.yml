@@ -59,7 +59,7 @@ inputs:
       - ignore: Ignore the merge conflict and continue.
       - comment: Comment on the pull request with a message about the merge conflict.
     required: false
-    default: 'fail'
+    default: 'comment'
   
   merge_method:
     description: >
