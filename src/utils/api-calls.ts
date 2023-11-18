@@ -104,6 +104,7 @@ export async function updatePullRequest(
 
     core.info(`Updated pull request ${pullRequest.number}`);
   } catch (error) {
+    core.debug(`Error: ${JSON.stringify(error, null, 2)}`);
     if (error instanceof Error && error.message.includes('permssion')) {
       core.info(
         `Failed to update pull request ${pullRequest.number} due to permissions issue`
@@ -174,7 +175,7 @@ export async function addCommentToPullRequest(
   pullRequest: PullRequest,
   comment: string,
   baseUrl?: string
-) {
+): Promise<void> {
   if (!pullRequest.id || !pullRequest.number) {
     core.error('Pull request id or number is undefined');
     return;
