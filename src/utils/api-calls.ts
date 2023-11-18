@@ -13,7 +13,12 @@ import {
   getPullRequestsQuery,
   GetPullRequestsQueryResponse,
 } from '../graphql/queries/pull-request';
-import { Octokit, PullRequest, RestPullRequest } from '../types';
+import {
+  IGraphQLErrors,
+  Octokit,
+  PullRequest,
+  RestPullRequest,
+} from '../types';
 
 const headRef = (owner: string, branch: string, repo: string): string =>
   `${owner}:${repo}:${branch}`;
@@ -105,7 +110,11 @@ export async function updatePullRequest(
     core.info(`Updated pull request ${pullRequest.number}`);
   } catch (error) {
     core.debug(`Error: ${JSON.stringify(error, null, 2)}`);
-    if (error instanceof Error && error.message.includes('permssion')) {
+    const GraphQLError = error as unknown as IGraphQLErrors;
+    if (
+      GraphQLError.name == 'GraphqlResponseError' &&
+      GraphQLError.errors.some(error => error.type == 'FORBIDDEN')
+    ) {
       core.info(
         `Failed to update pull request ${pullRequest.number} due to permissions issue`
       );

@@ -32260,7 +32260,9 @@ async function updatePullRequest(octokit, pullRequest, baseUrl) {
     }
     catch (error) {
         core.debug(`Error: ${JSON.stringify(error, null, 2)}`);
-        if (error instanceof Error && error.message.includes('permssion')) {
+        const GraphQLError = error;
+        if (GraphQLError.name == 'GraphqlResponseError' &&
+            GraphQLError.errors.some(error => error.type == 'FORBIDDEN')) {
             core.info(`Failed to update pull request ${pullRequest.number} due to permissions issue`);
             addCommentToPullRequest(octokit, pullRequest, 'Failed to update pull request due to permissions issue', baseUrl);
         }
