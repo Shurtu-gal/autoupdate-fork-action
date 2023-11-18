@@ -32244,18 +32244,26 @@ async function getAllPullRequests(octokit, owner, repo, baseUrl) {
 }
 exports.getAllPullRequests = getAllPullRequests;
 async function updatePullRequest(octokit, pullRequest, baseUrl) {
-    const response = (await octokit.graphql(pull_request_1.updatePullRequestBranchMutation, {
-        input: {
-            pullRequestId: pullRequest.id,
-            expectedHeadOid: pullRequest.headRefOid,
-        },
-        baseUrl,
-    }));
-    if (!response.updatePullRequestBranch.pullRequest) {
-        core.error(`Failed to update pull request ${pullRequest.number}`);
-        return;
+    try {
+        const response = (await octokit.graphql(pull_request_1.updatePullRequestBranchMutation, {
+            input: {
+                pullRequestId: pullRequest.id,
+                expectedHeadOid: pullRequest.headRefOid,
+            },
+            baseUrl,
+        }));
+        if (!response.updatePullRequestBranch.pullRequest) {
+            core.error(`Failed to update pull request ${pullRequest.number}`);
+            return;
+        }
+        core.info(`Updated pull request ${pullRequest.number}`);
     }
-    core.info(`Updated pull request ${pullRequest.number}`);
+    catch (error) {
+        if (error instanceof Error && error.message.includes('permssion')) {
+            core.info(`Failed to update pull request ${pullRequest.number} due to permissions issue`);
+            addCommentToPullRequest(octokit, pullRequest, 'Failed to update pull request due to permissions issue', baseUrl);
+        }
+    }
 }
 exports.updatePullRequest = updatePullRequest;
 async function getPullRequest(octokit, pullRequest, baseUrl) {
