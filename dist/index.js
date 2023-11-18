@@ -31783,11 +31783,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.updatePullRequest = void 0;
+exports.updatePullRequestNode = void 0;
 const api_calls_1 = __nccwpck_require__(3301);
 const core = __importStar(__nccwpck_require__(2186));
 const pr_needs_update_1 = __nccwpck_require__(5926);
-async function updatePullRequest(octokit, pullRequest, environment) {
+async function updatePullRequestNode(octokit, pullRequest, environment) {
     core.startGroup(`Updating pull request ${pullRequest.number}`);
     const pullRequestNode = await (0, api_calls_1.getPullRequest)(octokit, pullRequest, environment.githubRestApiUrl);
     core.debug(`Pull request payload: ${JSON.stringify(pullRequest, null, 2)}`);
@@ -31796,12 +31796,12 @@ async function updatePullRequest(octokit, pullRequest, environment) {
         return;
     }
     if ((0, pr_needs_update_1.prNeedsUpdate)(pullRequestNode, environment, octokit)) {
-        await (0, api_calls_1.updateRestPullRequest)(octokit, pullRequest, environment.githubRestApiUrl);
+        await (0, api_calls_1.updatePullRequest)(octokit, pullRequestNode, environment.githubRestApiUrl);
     }
     core.endGroup();
     return;
 }
-exports.updatePullRequest = updatePullRequest;
+exports.updatePullRequestNode = updatePullRequestNode;
 
 
 /***/ }),
@@ -32045,7 +32045,7 @@ async function run() {
                 if (!eventPayload.pull_request)
                     throw new Error('No pull request found in payload');
                 core.debug(`Pull request payload: ${JSON.stringify(eventPayload.pull_request, null, 2)}`);
-                await (0, update_pull_request_1.updatePullRequest)(octokit, eventPayload.pull_request, environment);
+                await (0, update_pull_request_1.updatePullRequestNode)(octokit, eventPayload.pull_request, environment);
                 break;
             case 'issue_comment':
                 if (!eventPayload.issue)
@@ -32061,7 +32061,7 @@ async function run() {
                         pull_number: eventPayload.issue.number,
                     });
                     core.debug(`Pull request: ${JSON.stringify(pull_request, null, 2)}`);
-                    await (0, update_pull_request_1.updatePullRequest)(octokit, pull_request.data, environment);
+                    await (0, update_pull_request_1.updatePullRequestNode)(octokit, pull_request.data, environment);
                 }
                 break;
             case 'push':
