@@ -20,7 +20,7 @@ export async function updatePullRequest(
     return;
   }
 
-  if (prNeedsUpdate(pullRequestNode, environment)) {
+  if (prNeedsUpdate(pullRequestNode, environment, octokit)) {
     await updateRestPullRequest(
       octokit,
       pullRequest,
