@@ -31545,6 +31545,50 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 9042:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.DIRTY_COMMENT = exports.CONFLICT_COMMENT = exports.PERMISSION_COMMENT = void 0;
+// Markdown for permission error
+exports.PERMISSION_COMMENT = `
+<details>
+  <summary>Error: Failed to update Pull Request</summary>
+  <ul>
+    <li>The branch update is currently blocked due to insufficient permissions.</li>
+    <li>Please make sure that the necessary permissions are provided to proceed with the update.</li>
+    <li>For more information, please refer to <a href="">this</a> document.</li>
+  </ul>
+</details>
+`;
+// Markdown for conflict error`
+exports.CONFLICT_COMMENT = `
+<details>
+  <summary>Error: Failed to update Pull Request</summary>
+  <ul>
+    <li>The branch update is currently blocked due to conflicts.</li>
+    <li>Please make sure that the conflicts are resolved to proceed with the update.</li>
+    <li>For more information, please refer to <a href="">this</a> document.</li>
+  </ul>
+</details>
+`;
+// Markdown for dirty error
+exports.DIRTY_COMMENT = `
+<details>
+  <summary>Error: Failed to update Pull Request</summary>
+  <ul>
+    <li>Pull request is dirty, merge-commit cannot be cleanly created</li>
+    <li>Please make sure that the dirty state is resolved to proceed with the update.</li>
+    <li>For more information, please refer to <a href="">this</a> document.</li>
+  </ul>
+</details>
+`;
+
+
+/***/ }),
+
 /***/ 6869:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -32206,6 +32250,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const pull_request_1 = __nccwpck_require__(1924);
 const node_1 = __nccwpck_require__(7637);
 const pull_request_2 = __nccwpck_require__(5957);
+const constants_1 = __nccwpck_require__(9042);
 const headRef = (owner, branch, repo) => `${owner}:${repo}:${branch}`;
 async function getPullRequestsOnBranch(octokit, branch, owner, repo, baseUrl) {
     core.debug(`Variables in getAllPullRequests: ${JSON.stringify({ owner, repo, baseUrl, branch }, null, 2)}`);
@@ -32264,7 +32309,7 @@ async function updatePullRequest(octokit, pullRequest, baseUrl) {
         if (GraphQLError.name == 'GraphqlResponseError' &&
             GraphQLError.errors.some(error => error.type == 'FORBIDDEN')) {
             core.info(`Failed to update pull request ${pullRequest.number} due to permissions issue`);
-            addCommentToPullRequest(octokit, pullRequest, 'Failed to update pull request due to permissions issue', baseUrl);
+            addCommentToPullRequest(octokit, pullRequest, constants_1.PERMISSION_COMMENT, baseUrl);
         }
     }
 }
@@ -32309,7 +32354,7 @@ async function addCommentToPullRequest(octokit, pullRequest, comment, baseUrl) {
         core.error('Comment is undefined');
         return;
     }
-    const { clientMutationId } = (await octokit.graphql(`
+    const { addComment } = (await octokit.graphql(`
     mutation addCommentToPullRequest($input: AddCommentInput!) {
       addComment(input: $input) {
         clientMutationId
@@ -32322,7 +32367,7 @@ async function addCommentToPullRequest(octokit, pullRequest, comment, baseUrl) {
         },
         baseUrl,
     }));
-    if (!clientMutationId) {
+    if (!addComment.clientMutationId) {
         core.error('Failed to add comment to pull request');
         return;
     }
@@ -32365,6 +32410,7 @@ exports.prNeedsUpdate = void 0;
 const types_1 = __nccwpck_require__(5077);
 const core = __importStar(__nccwpck_require__(2186));
 const api_calls_1 = __nccwpck_require__(3301);
+const constants_1 = __nccwpck_require__(9042);
 const prNeedsUpdate = (pullRequest, environment, octokit) => {
     // Checks if the pull_request base branch is ahead of the head branch a.k.a. if the pull_request needs to be updated
     if (pullRequest.headRef.compare.aheadBy === 0) {
@@ -32373,7 +32419,7 @@ const prNeedsUpdate = (pullRequest, environment, octokit) => {
     }
     if (pullRequest.mergeable === types_1.mergeableState.CONFLICTING) {
         core.error(`Pull request ${pullRequest.number} has conflicts`);
-        (0, api_calls_1.addCommentToPullRequest)(octokit, pullRequest, `Pull request ${pullRequest.number} has conflicts`, environment.githubRestApiUrl);
+        (0, api_calls_1.addCommentToPullRequest)(octokit, pullRequest, constants_1.CONFLICT_COMMENT, environment.githubRestApiUrl);
         return false;
     }
     if (pullRequest.mergeable === types_1.mergeableState.UNKNOWN) {
@@ -32406,11 +32452,10 @@ const prNeedsUpdate = (pullRequest, environment, octokit) => {
             return true;
         case types_1.mergeStateStatus.BLOCKED:
             core.error(`Pull request ${pullRequest.number} is blocked`);
-            comment = `Pull request ${pullRequest.number} is blocked`;
-            break;
+            return false;
         case types_1.mergeStateStatus.DIRTY:
             core.error(`Pull request ${pullRequest.number} is dirty, merge-commit cannot be cleanly created`);
-            comment = `Pull request ${pullRequest.number} is dirty, merge-commit cannot be cleanly created`;
+            comment = constants_1.DIRTY_COMMENT;
             break;
         case types_1.mergeStateStatus.DRAFT:
             core.error(`Pull request ${pullRequest.number} is a draft`);
