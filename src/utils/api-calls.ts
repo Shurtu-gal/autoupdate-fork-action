@@ -113,8 +113,8 @@ export async function updatePullRequest(
     core.debug(`Error: ${JSON.stringify(error, null, 2)}`);
     const GraphQLError = error as unknown as IGraphQLErrors;
     if (
-      GraphQLError.name == 'GraphqlResponseError' &&
-      GraphQLError.errors.some(error => error.type == 'FORBIDDEN')
+      GraphQLError.name === 'GraphqlResponseError' &&
+      GraphQLError.errors.some(error => error.type === 'FORBIDDEN')
     ) {
       core.info(
         `Failed to update pull request ${pullRequest.number} due to permissions issue`
