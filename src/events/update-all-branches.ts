@@ -22,7 +22,7 @@ export async function updateAllBranches(
   pulls.forEach(async pull => {
     core.startGroup(`Updating pull request ${pull.number}`);
     core.debug(`Pull request payload: ${JSON.stringify(pull, null, 2)}`);
-    if (prNeedsUpdate(pull, environment)) {
+    if (prNeedsUpdate(pull, environment, octokit)) {
       await updatePullRequest(octokit, pull, environment.githubRestApiUrl);
     }
     core.endGroup();
