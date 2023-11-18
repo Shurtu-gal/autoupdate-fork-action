@@ -1,4 +1,5 @@
 import * as github from '@actions/github';
+import { GraphQLError } from 'graphql';
 
 export type Octokit = ReturnType<typeof github.getOctokit>;
 
@@ -96,4 +97,19 @@ export interface IEnvironment {
   mergeConflictAction: EnumMergeConflictAction;
   mergeMethod: EnumMergeMethod;
   mergeCommitMessage: string;
+}
+
+export interface IGraphQLErrors {
+  request: {
+    query: string;
+    variables: Record<string, unknown>;
+    baseUrl: string;
+  };
+  headers: Record<string, string>;
+  response: {
+    data: Record<string, unknown>;
+    errors: (GraphQLError & { type: string })[];
+  };
+  errors: (GraphQLError & { type: string })[];
+  name: string;
 }
