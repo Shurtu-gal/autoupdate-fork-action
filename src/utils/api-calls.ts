@@ -19,6 +19,7 @@ import {
   PullRequest,
   RestPullRequest,
 } from '../types';
+import { PERMISSION_COMMENT } from 'src/constants';
 
 const headRef = (owner: string, branch: string, repo: string): string =>
   `${owner}:${repo}:${branch}`;
@@ -121,7 +122,7 @@ export async function updatePullRequest(
       addCommentToPullRequest(
         octokit,
         pullRequest,
-        'Failed to update pull request due to permissions issue',
+        PERMISSION_COMMENT,
         baseUrl
       );
     }
@@ -195,7 +196,7 @@ export async function addCommentToPullRequest(
     return;
   }
 
-  const { clientMutationId } = (await octokit.graphql(
+  const { addComment } = (await octokit.graphql(
     `
     mutation addCommentToPullRequest($input: AddCommentInput!) {
       addComment(input: $input) {
@@ -210,9 +211,9 @@ export async function addCommentToPullRequest(
       },
       baseUrl,
     }
-  )) as { clientMutationId: string };
+  )) as { addComment: { clientMutationId: string } };
 
-  if (!clientMutationId) {
+  if (!addComment.clientMutationId) {
     core.error('Failed to add comment to pull request');
     return;
   }
