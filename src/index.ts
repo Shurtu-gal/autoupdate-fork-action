@@ -5,7 +5,7 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { retry } from '@octokit/plugin-retry';
 import { setupEnvironment } from './environment';
-import { updatePullRequest } from './events/update-pull-request';
+import { updatePullRequestNode } from './events/update-pull-request';
 import { RestIssue, RestPullRequest } from './types';
 import { updatePullRequestsOnBranch } from './events/update-branch-pull-request';
 import { updateAllBranches } from './events/update-all-branches';
@@ -75,7 +75,7 @@ export async function run(): Promise<void> {
           )}`
         );
 
-        await updatePullRequest(
+        await updatePullRequestNode(
           octokit,
           eventPayload.pull_request as RestPullRequest,
           environment
@@ -97,7 +97,7 @@ export async function run(): Promise<void> {
             pull_number: (eventPayload.issue as RestIssue).number,
           });
           core.debug(`Pull request: ${JSON.stringify(pull_request, null, 2)}`);
-          await updatePullRequest(
+          await updatePullRequestNode(
             octokit,
             pull_request.data as RestPullRequest,
             environment

@@ -31691,7 +31691,7 @@ async function updateAllBranches(octokit, owner, repo, environment) {
     pulls.forEach(async (pull) => {
         core.startGroup(`Updating pull request ${pull.number}`);
         core.debug(`Pull request payload: ${JSON.stringify(pull, null, 2)}`);
-        if ((0, pr_needs_update_1.prNeedsUpdate)(pull, environment)) {
+        if ((0, pr_needs_update_1.prNeedsUpdate)(pull, environment, octokit)) {
             await (0, api_calls_1.updatePullRequest)(octokit, pull, environment.githubRestApiUrl);
         }
         core.endGroup();
@@ -31743,7 +31743,7 @@ async function updatePullRequestsOnBranch(octokit, owner, branch, repo, environm
     pulls.forEach(async (pull) => {
         core.startGroup(`Updating pull request ${pull.number}`);
         core.debug(`Pull request payload: ${JSON.stringify(pull, null, 2)}`);
-        if ((0, pr_needs_update_1.prNeedsUpdate)(pull, environment)) {
+        if ((0, pr_needs_update_1.prNeedsUpdate)(pull, environment, octokit)) {
             await (0, api_calls_1.updatePullRequest)(octokit, pull, environment.githubRestApiUrl);
         }
         core.endGroup();
@@ -31783,11 +31783,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.updatePullRequest = void 0;
+exports.updatePullRequestNode = void 0;
 const api_calls_1 = __nccwpck_require__(3301);
 const core = __importStar(__nccwpck_require__(2186));
 const pr_needs_update_1 = __nccwpck_require__(5926);
-async function updatePullRequest(octokit, pullRequest, environment) {
+async function updatePullRequestNode(octokit, pullRequest, environment) {
     core.startGroup(`Updating pull request ${pullRequest.number}`);
     const pullRequestNode = await (0, api_calls_1.getPullRequest)(octokit, pullRequest, environment.githubRestApiUrl);
     core.debug(`Pull request payload: ${JSON.stringify(pullRequest, null, 2)}`);
@@ -31795,13 +31795,13 @@ async function updatePullRequest(octokit, pullRequest, environment) {
         core.error(`Failed to get pull request ${pullRequest.number}`);
         return;
     }
-    if ((0, pr_needs_update_1.prNeedsUpdate)(pullRequestNode, environment)) {
-        await (0, api_calls_1.updateRestPullRequest)(octokit, pullRequest, environment.githubRestApiUrl);
+    if ((0, pr_needs_update_1.prNeedsUpdate)(pullRequestNode, environment, octokit)) {
+        await (0, api_calls_1.updatePullRequest)(octokit, pullRequestNode, environment.githubRestApiUrl);
     }
     core.endGroup();
     return;
 }
-exports.updatePullRequest = updatePullRequest;
+exports.updatePullRequestNode = updatePullRequestNode;
 
 
 /***/ }),
@@ -32045,7 +32045,7 @@ async function run() {
                 if (!eventPayload.pull_request)
                     throw new Error('No pull request found in payload');
                 core.debug(`Pull request payload: ${JSON.stringify(eventPayload.pull_request, null, 2)}`);
-                await (0, update_pull_request_1.updatePullRequest)(octokit, eventPayload.pull_request, environment);
+                await (0, update_pull_request_1.updatePullRequestNode)(octokit, eventPayload.pull_request, environment);
                 break;
             case 'issue_comment':
                 if (!eventPayload.issue)
@@ -32061,7 +32061,7 @@ async function run() {
                         pull_number: eventPayload.issue.number,
                     });
                     core.debug(`Pull request: ${JSON.stringify(pull_request, null, 2)}`);
-                    await (0, update_pull_request_1.updatePullRequest)(octokit, pull_request.data, environment);
+                    await (0, update_pull_request_1.updatePullRequestNode)(octokit, pull_request.data, environment);
                 }
                 break;
             case 'push':
@@ -32201,11 +32201,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.updateRestPullRequest = exports.getPullRequest = exports.updatePullRequest = exports.getAllPullRequests = exports.getPullRequestsOnBranch = void 0;
+exports.addCommentToPullRequest = exports.updateRestPullRequest = exports.getPullRequest = exports.updatePullRequest = exports.getAllPullRequests = exports.getPullRequestsOnBranch = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const pull_request_1 = __nccwpck_require__(1924);
-const pull_request_2 = __nccwpck_require__(5957);
 const node_1 = __nccwpck_require__(7637);
+const pull_request_2 = __nccwpck_require__(5957);
 const headRef = (owner, branch, repo) => `${owner}:${repo}:${branch}`;
 async function getPullRequestsOnBranch(octokit, branch, owner, repo, baseUrl) {
     core.debug(`Variables in getAllPullRequests: ${JSON.stringify({ owner, repo, baseUrl, branch }, null, 2)}`);
@@ -32244,18 +32244,26 @@ async function getAllPullRequests(octokit, owner, repo, baseUrl) {
 }
 exports.getAllPullRequests = getAllPullRequests;
 async function updatePullRequest(octokit, pullRequest, baseUrl) {
-    const response = (await octokit.graphql(pull_request_1.updatePullRequestBranchMutation, {
-        input: {
-            pullRequestId: pullRequest.id,
-            expectedHeadOid: pullRequest.headRefOid,
-        },
-        baseUrl,
-    }));
-    if (!response.updatePullRequestBranch.pullRequest) {
-        core.error(`Failed to update pull request ${pullRequest.number}`);
-        return;
+    try {
+        const response = (await octokit.graphql(pull_request_1.updatePullRequestBranchMutation, {
+            input: {
+                pullRequestId: pullRequest.id,
+                expectedHeadOid: pullRequest.headRefOid,
+            },
+            baseUrl,
+        }));
+        if (!response.updatePullRequestBranch.pullRequest) {
+            core.error(`Failed to update pull request ${pullRequest.number}`);
+            return;
+        }
+        core.info(`Updated pull request ${pullRequest.number}`);
     }
-    core.info(`Updated pull request ${pullRequest.number}`);
+    catch (error) {
+        if (error instanceof Error && error.message.includes('permssion')) {
+            core.info(`Failed to update pull request ${pullRequest.number} due to permissions issue`);
+            addCommentToPullRequest(octokit, pullRequest, 'Failed to update pull request due to permissions issue', baseUrl);
+        }
+    }
 }
 exports.updatePullRequest = updatePullRequest;
 async function getPullRequest(octokit, pullRequest, baseUrl) {
@@ -32289,6 +32297,34 @@ async function updateRestPullRequest(octokit, pullRequest, baseUrl) {
     core.info(`Updated pull request ${number}`);
 }
 exports.updateRestPullRequest = updateRestPullRequest;
+async function addCommentToPullRequest(octokit, pullRequest, comment, baseUrl) {
+    if (!pullRequest.id || !pullRequest.number) {
+        core.error('Pull request id or number is undefined');
+        return;
+    }
+    if (!comment) {
+        core.error('Comment is undefined');
+        return;
+    }
+    const { clientMutationId } = (await octokit.graphql(`
+    mutation addCommentToPullRequest($input: AddCommentInput!) {
+      addComment(input: $input) {
+        clientMutationId
+      }
+    }
+  `, {
+        input: {
+            subjectId: pullRequest.id,
+            body: comment,
+        },
+        baseUrl,
+    }));
+    if (!clientMutationId) {
+        core.error('Failed to add comment to pull request');
+        return;
+    }
+}
+exports.addCommentToPullRequest = addCommentToPullRequest;
 
 
 /***/ }),
@@ -32325,15 +32361,16 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.prNeedsUpdate = void 0;
 const types_1 = __nccwpck_require__(5077);
 const core = __importStar(__nccwpck_require__(2186));
-const prNeedsUpdate = (pullRequest, environment) => {
+const api_calls_1 = __nccwpck_require__(3301);
+const prNeedsUpdate = (pullRequest, environment, octokit) => {
     // Checks if the pull_request base branch is ahead of the head branch a.k.a. if the pull_request needs to be updated
     if (pullRequest.headRef.compare.aheadBy === 0) {
         core.info(`Pull request ${pullRequest.number} is up to date`);
         return false;
     }
     if (pullRequest.mergeable === types_1.mergeableState.CONFLICTING) {
-        // TODO: Add comment to PR if merge conflict action is comment
         core.error(`Pull request ${pullRequest.number} has conflicts`);
+        (0, api_calls_1.addCommentToPullRequest)(octokit, pullRequest, `Pull request ${pullRequest.number} has conflicts`, environment.githubRestApiUrl);
         return false;
     }
     if (pullRequest.mergeable === types_1.mergeableState.UNKNOWN) {
@@ -32357,6 +32394,7 @@ const prNeedsUpdate = (pullRequest, environment) => {
         core.info(`Pull request ${pullRequest.number} has one of the specified excluded labels`);
         return false;
     }
+    let comment;
     switch (pullRequest.mergeStateStatus) {
         case types_1.mergeStateStatus.BEHIND:
         case types_1.mergeStateStatus.CLEAN:
@@ -32365,10 +32403,12 @@ const prNeedsUpdate = (pullRequest, environment) => {
             return true;
         case types_1.mergeStateStatus.BLOCKED:
             core.error(`Pull request ${pullRequest.number} is blocked`);
-            return false;
+            comment = `Pull request ${pullRequest.number} is blocked`;
+            break;
         case types_1.mergeStateStatus.DIRTY:
             core.error(`Pull request ${pullRequest.number} is dirty, merge-commit cannot be cleanly created`);
-            return false;
+            comment = `Pull request ${pullRequest.number} is dirty, merge-commit cannot be cleanly created`;
+            break;
         case types_1.mergeStateStatus.DRAFT:
             core.error(`Pull request ${pullRequest.number} is a draft`);
             return false;
@@ -32377,6 +32417,10 @@ const prNeedsUpdate = (pullRequest, environment) => {
         default:
             return false;
     }
+    if (comment) {
+        (0, api_calls_1.addCommentToPullRequest)(octokit, pullRequest, comment, environment.githubRestApiUrl);
+    }
+    return false;
 };
 exports.prNeedsUpdate = prNeedsUpdate;
 

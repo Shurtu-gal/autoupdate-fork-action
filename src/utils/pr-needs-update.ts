@@ -1,15 +1,18 @@
 import {
   EnumPRFilter,
   IEnvironment,
+  Octokit,
   PullRequest,
   mergeStateStatus,
   mergeableState,
 } from '../types';
 import * as core from '@actions/core';
+import { addCommentToPullRequest } from './api-calls';
 
 export const prNeedsUpdate = (
   pullRequest: PullRequest,
-  environment: IEnvironment
+  environment: IEnvironment,
+  octokit: Octokit
 ): boolean => {
   // Checks if the pull_request base branch is ahead of the head branch a.k.a. if the pull_request needs to be updated
   if (pullRequest.headRef.compare.aheadBy === 0) {
@@ -18,8 +21,13 @@ export const prNeedsUpdate = (
   }
 
   if (pullRequest.mergeable === mergeableState.CONFLICTING) {
-    // TODO: Add comment to PR if merge conflict action is comment
     core.error(`Pull request ${pullRequest.number} has conflicts`);
+    addCommentToPullRequest(
+      octokit,
+      pullRequest,
+      `Pull request ${pullRequest.number} has conflicts`,
+      environment.githubRestApiUrl
+    );
     return false;
   }
 
@@ -61,6 +69,8 @@ export const prNeedsUpdate = (
     return false;
   }
 
+  let comment;
+
   switch (pullRequest.mergeStateStatus) {
     case mergeStateStatus.BEHIND:
     case mergeStateStatus.CLEAN:
@@ -69,12 +79,15 @@ export const prNeedsUpdate = (
       return true;
     case mergeStateStatus.BLOCKED:
       core.error(`Pull request ${pullRequest.number} is blocked`);
-      return false;
+      comment = `Pull request ${pullRequest.number} is blocked`;
+      break;
+
     case mergeStateStatus.DIRTY:
       core.error(
         `Pull request ${pullRequest.number} is dirty, merge-commit cannot be cleanly created`
       );
-      return false;
+      comment = `Pull request ${pullRequest.number} is dirty, merge-commit cannot be cleanly created`;
+      break;
     case mergeStateStatus.DRAFT:
       core.error(`Pull request ${pullRequest.number} is a draft`);
       return false;
@@ -83,4 +96,14 @@ export const prNeedsUpdate = (
     default:
       return false;
   }
+
+  if (comment) {
+    addCommentToPullRequest(
+      octokit,
+      pullRequest,
+      comment,
+      environment.githubRestApiUrl
+    );
+  }
+  return false;
 };

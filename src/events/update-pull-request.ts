@@ -1,9 +1,9 @@
 import { IEnvironment, Octokit, RestPullRequest } from '../types';
-import { getPullRequest, updateRestPullRequest } from '../utils/api-calls';
+import { getPullRequest, updatePullRequest } from '../utils/api-calls';
 import * as core from '@actions/core';
 import { prNeedsUpdate } from '../utils/pr-needs-update';
 
-export async function updatePullRequest(
+export async function updatePullRequestNode(
   octokit: Octokit,
   pullRequest: RestPullRequest,
   environment: IEnvironment
@@ -20,10 +20,10 @@ export async function updatePullRequest(
     return;
   }
 
-  if (prNeedsUpdate(pullRequestNode, environment)) {
-    await updateRestPullRequest(
+  if (prNeedsUpdate(pullRequestNode, environment, octokit)) {
+    await updatePullRequest(
       octokit,
-      pullRequest,
+      pullRequestNode,
       environment.githubRestApiUrl
     );
   }
