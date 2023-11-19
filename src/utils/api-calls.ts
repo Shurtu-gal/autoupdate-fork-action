@@ -20,7 +20,7 @@ import {
   PullRequest,
   RestPullRequest,
 } from '../types';
-import { PERMISSION_COMMENT } from 'src/constants';
+import { PERMISSION_COMMENT } from '../../src/constants';
 
 const headRef = (owner: string, branch: string, repo: string): string =>
   `${owner}:${repo}:${branch}`;
