@@ -1,7 +1,7 @@
 {
   "name": "autoupdate-fork-action",
   "description": "GitHub Action to automatically update a forked repository",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "author": "Ashish Padhy <100484401+Shurtu-gal@users.noreply.github.com>",
   "homepage": "https://github.com/Shurtu-gal/autoupdate-fork-action",
   "repository": {
