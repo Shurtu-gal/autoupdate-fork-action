@@ -1,4 +1,5 @@
 import {
+  EnumMergeFailAction,
   EnumPRFilter,
   IEnvironment,
   Octokit,
@@ -8,6 +9,7 @@ import {
 } from '../types';
 import * as core from '@actions/core';
 import { addCommentToPullRequest } from './api-calls';
+import { CONFLICT_COMMENT, DIRTY_COMMENT } from '../../src/constants';
 
 export const prNeedsUpdate = (
   pullRequest: PullRequest,
@@ -22,12 +24,14 @@ export const prNeedsUpdate = (
 
   if (pullRequest.mergeable === mergeableState.CONFLICTING) {
     core.error(`Pull request ${pullRequest.number} has conflicts`);
-    addCommentToPullRequest(
-      octokit,
-      pullRequest,
-      `Pull request ${pullRequest.number} has conflicts`,
-      environment.githubRestApiUrl
-    );
+    if (!environment.ignoreConflicts) {
+      addCommentToPullRequest(
+        octokit,
+        pullRequest,
+        CONFLICT_COMMENT,
+        environment.githubRestApiUrl
+      );
+    }
     return false;
   }
 
@@ -79,14 +83,12 @@ export const prNeedsUpdate = (
       return true;
     case mergeStateStatus.BLOCKED:
       core.error(`Pull request ${pullRequest.number} is blocked`);
-      comment = `Pull request ${pullRequest.number} is blocked`;
-      break;
-
+      return false;
     case mergeStateStatus.DIRTY:
       core.error(
         `Pull request ${pullRequest.number} is dirty, merge-commit cannot be cleanly created`
       );
-      comment = `Pull request ${pullRequest.number} is dirty, merge-commit cannot be cleanly created`;
+      comment = DIRTY_COMMENT;
       break;
     case mergeStateStatus.DRAFT:
       core.error(`Pull request ${pullRequest.number} is a draft`);
@@ -97,7 +99,7 @@ export const prNeedsUpdate = (
       return false;
   }
 
-  if (comment) {
+  if (comment && environment.mergeFailAction === EnumMergeFailAction.Comment) {
     addCommentToPullRequest(
       octokit,
       pullRequest,

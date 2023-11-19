@@ -13,7 +13,14 @@ import {
   getPullRequestsQuery,
   GetPullRequestsQueryResponse,
 } from '../graphql/queries/pull-request';
-import { Octokit, PullRequest, RestPullRequest } from '../types';
+import {
+  EnumMergeFailAction,
+  IGraphQLErrors,
+  Octokit,
+  PullRequest,
+  RestPullRequest,
+} from '../types';
+import { PERMISSION_COMMENT } from '../../src/constants';
 
 const headRef = (owner: string, branch: string, repo: string): string =>
   `${owner}:${repo}:${branch}`;
@@ -86,7 +93,8 @@ export async function getAllPullRequests(
 export async function updatePullRequest(
   octokit: Octokit,
   pullRequest: PullRequest,
-  baseUrl: string
+  baseUrl: string,
+  mergeFailAction: EnumMergeFailAction
 ): Promise<void> {
   try {
     const response = (await octokit.graphql(updatePullRequestBranchMutation, {
@@ -104,16 +112,33 @@ export async function updatePullRequest(
 
     core.info(`Updated pull request ${pullRequest.number}`);
   } catch (error) {
-    if (error instanceof Error && error.message.includes('permssion')) {
+    core.debug(`Error: ${JSON.stringify(error, null, 2)}`);
+    const GraphQLError = error as unknown as IGraphQLErrors;
+    if (
+      GraphQLError.name === 'GraphqlResponseError' &&
+      GraphQLError.errors.some(
+        error => error.type === 'FORBIDDEN' || error.type === 'UNAUTHORIZED'
+      )
+    ) {
       core.info(
         `Failed to update pull request ${pullRequest.number} due to permissions issue`
       );
-      addCommentToPullRequest(
-        octokit,
-        pullRequest,
-        'Failed to update pull request due to permissions issue',
-        baseUrl
-      );
+      if (mergeFailAction === EnumMergeFailAction.Comment) {
+        await addCommentToPullRequest(
+          octokit,
+          pullRequest,
+          PERMISSION_COMMENT,
+          baseUrl
+        );
+      } else if (mergeFailAction === EnumMergeFailAction.Fail) {
+        core.setFailed(
+          `Failed to update pull request ${pullRequest.number} due to permissions issue`
+        );
+      } else {
+        core.info(
+          `Skipping pull request ${pullRequest.number} due to permissions issue`
+        );
+      }
     }
   }
 }
@@ -174,7 +199,7 @@ export async function addCommentToPullRequest(
   pullRequest: PullRequest,
   comment: string,
   baseUrl?: string
-) {
+): Promise<void> {
   if (!pullRequest.id || !pullRequest.number) {
     core.error('Pull request id or number is undefined');
     return;
@@ -185,7 +210,7 @@ export async function addCommentToPullRequest(
     return;
   }
 
-  const { clientMutationId } = (await octokit.graphql(
+  const { addComment } = (await octokit.graphql(
     `
     mutation addCommentToPullRequest($input: AddCommentInput!) {
       addComment(input: $input) {
@@ -200,9 +225,9 @@ export async function addCommentToPullRequest(
       },
       baseUrl,
     }
-  )) as { clientMutationId: string };
+  )) as { addComment: { clientMutationId: string } };
 
-  if (!clientMutationId) {
+  if (!addComment.clientMutationId) {
     core.error('Failed to add comment to pull request');
     return;
   }
