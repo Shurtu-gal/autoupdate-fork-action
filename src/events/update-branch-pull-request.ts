@@ -25,7 +25,7 @@ export async function updatePullRequestsOnBranch(
     core.startGroup(`Updating pull request ${pull.number}`);
     core.debug(`Pull request payload: ${JSON.stringify(pull, null, 2)}`);
     if (prNeedsUpdate(pull, environment, octokit)) {
-      await updatePullRequest(octokit, pull, environment.githubRestApiUrl);
+      await updatePullRequest(octokit, pull, environment.githubRestApiUrl, environment.mergeFailAction);
     }
     core.endGroup();
   });

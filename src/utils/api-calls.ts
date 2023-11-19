@@ -14,6 +14,7 @@ import {
   GetPullRequestsQueryResponse,
 } from '../graphql/queries/pull-request';
 import {
+  EnumMergeFailAction,
   IGraphQLErrors,
   Octokit,
   PullRequest,
@@ -92,7 +93,8 @@ export async function getAllPullRequests(
 export async function updatePullRequest(
   octokit: Octokit,
   pullRequest: PullRequest,
-  baseUrl: string
+  baseUrl: string,
+  mergeFailAction: EnumMergeFailAction
 ): Promise<void> {
   try {
     const response = (await octokit.graphql(updatePullRequestBranchMutation, {
@@ -114,17 +116,23 @@ export async function updatePullRequest(
     const GraphQLError = error as unknown as IGraphQLErrors;
     if (
       GraphQLError.name === 'GraphqlResponseError' &&
-      GraphQLError.errors.some(error => error.type === 'FORBIDDEN')
+      GraphQLError.errors.some(error => error.type === 'FORBIDDEN' || error.type === 'UNAUTHORIZED')
     ) {
       core.info(
         `Failed to update pull request ${pullRequest.number} due to permissions issue`
       );
-      addCommentToPullRequest(
-        octokit,
-        pullRequest,
-        PERMISSION_COMMENT,
-        baseUrl
-      );
+      if(mergeFailAction === EnumMergeFailAction.Comment) {
+        await addCommentToPullRequest(
+          octokit,
+          pullRequest,
+          PERMISSION_COMMENT,
+          baseUrl
+        );
+      } else if(mergeFailAction === EnumMergeFailAction.Fail) {
+        core.setFailed(`Failed to update pull request ${pullRequest.number} due to permissions issue`);
+      } else {
+        core.info(`Skipping pull request ${pullRequest.number} due to permissions issue`);
+      }
     }
   }
 }

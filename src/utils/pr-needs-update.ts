@@ -1,4 +1,5 @@
 import {
+  EnumMergeFailAction,
   EnumPRFilter,
   IEnvironment,
   Octokit,
@@ -23,12 +24,14 @@ export const prNeedsUpdate = (
 
   if (pullRequest.mergeable === mergeableState.CONFLICTING) {
     core.error(`Pull request ${pullRequest.number} has conflicts`);
-    addCommentToPullRequest(
-      octokit,
-      pullRequest,
-      CONFLICT_COMMENT,
-      environment.githubRestApiUrl
-    );
+    if(!environment.ignoreConflicts) {
+      addCommentToPullRequest(
+        octokit,
+        pullRequest,
+        CONFLICT_COMMENT,
+        environment.githubRestApiUrl
+      );
+    }
     return false;
   }
 
@@ -96,7 +99,7 @@ export const prNeedsUpdate = (
       return false;
   }
 
-  if (comment) {
+  if (comment && environment.mergeFailAction === EnumMergeFailAction.Comment) {
     addCommentToPullRequest(
       octokit,
       pullRequest,

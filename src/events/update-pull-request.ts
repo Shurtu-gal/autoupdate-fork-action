@@ -24,7 +24,8 @@ export async function updatePullRequestNode(
     await updatePullRequest(
       octokit,
       pullRequestNode,
-      environment.githubRestApiUrl
+      environment.githubRestApiUrl,
+      environment.mergeFailAction
     );
   }
 
