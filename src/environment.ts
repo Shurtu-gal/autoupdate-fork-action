@@ -1,5 +1,5 @@
 import {
-  EnumMergeConflictAction,
+  EnumMergeFailAction,
   EnumMergeMethod,
   EnumPRFilter,
   EnumPRReadyState,
@@ -83,12 +83,12 @@ export function setupEnvironment(): IEnvironment {
       [],
       commaSeparatedStringToArray
     );
-    const mergeConflictAction = getValueFromInput<EnumMergeConflictAction>(
-      'merge_conflict_action',
+    const mergeFailAction = getValueFromInput<EnumMergeFailAction>(
+      'merge_fail_action',
       false,
-      EnumMergeConflictAction.Fail,
+      EnumMergeFailAction.Fail,
       undefined,
-      EnumMergeConflictAction
+      EnumMergeFailAction
     );
     const mergeMethod = getValueFromInput<EnumMergeMethod>(
       'merge_method',
@@ -102,6 +102,13 @@ export function setupEnvironment(): IEnvironment {
       false,
       ''
     );
+    const ignoreConflicts = getValueFromInput<boolean>(
+      'ignore_conflicts',
+      false,
+      true,
+      value => value === 'true'
+    );
+
     const githubRestApiUrl =
       process.env.GITHUB_API_URL || 'https://api.github.com';
     const githubGraphqlApiUrl =
@@ -116,9 +123,10 @@ export function setupEnvironment(): IEnvironment {
       prReadyState,
       prLabels,
       excludePrLabels,
-      mergeConflictAction,
+      mergeFailAction,
       mergeMethod,
       mergeCommitMessage,
+      ignoreConflicts,
     };
   } catch (error) {
     if (error instanceof Error) throw error;

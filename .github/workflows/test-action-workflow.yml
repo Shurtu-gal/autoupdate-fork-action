@@ -48,7 +48,7 @@ jobs:
           pr_label: ${{ inputs.pr_label || 'test-autoupdate' }}
           pr_ready_state: 'all'
           exclude_pr_label: ''
-          merge_conflict_action: 'fail'
+          merge_fail_action: 'fail'
           merge_method: 'merge'
           merge_commit_message: ''
           base_branches: ${{ inputs.base_branches || 'master,main' }}

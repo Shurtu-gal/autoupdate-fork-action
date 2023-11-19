@@ -52,14 +52,14 @@ inputs:
     required: false
     default: ''
 
-  merge_conflict_action:
+  merge_fail_action:
     description: >
-      Controls how autoupdate handles merge conflicts.
-      - fail: Fail the workflow.
-      - ignore: Ignore the merge conflict and continue.
-      - comment: Comment on the pull request with a message about the merge conflict.
+      Controls how autoupdate handles errors during the merge operation.
+      - fail: Fail the whole workflows.
+      - ignore: Ignore the errors and continue.
+      - comment: Comment on the pull request with a message about the merge fail.
     required: false
-    default: 'fail'
+    default: 'comment'
   
   merge_method:
     description: >
@@ -77,17 +77,23 @@ inputs:
     required: false
     deprecationMessage: 'Not supported yet. Will be supported in future releases.'
 
+  ignore_conflicts: 
+    description: Boolean value to ignore merge requests with conflicts.
+    required: false
+    default: "true"
+
 outputs:
   merge_status:
     description: >
-      The status of the merge operation.
-      - success: The merge was successful.
-      - failure: The merge failed.
-      - skipped: The merge was skipped.
+      The status of the merge operations. Returns success if all merges were successful, otherwise returns failure.
   
-  merge_message:
+  merge_fail_nodes:
     description: >
-      The message of the merge operation.
+      The list of nodes that failed to merge. Returns empty if all merges were successful.
+  
+  merge_success_nodes:
+    description: >
+      The list of nodes that were successfully merged. Returns empty if all merges failed.
 
 runs:
   using: node20

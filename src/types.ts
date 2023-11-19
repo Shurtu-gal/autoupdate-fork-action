@@ -1,4 +1,5 @@
 import * as github from '@actions/github';
+import { GraphQLError } from 'graphql';
 
 export type Octokit = ReturnType<typeof github.getOctokit>;
 
@@ -72,7 +73,7 @@ export enum EnumPRReadyState {
   ReadyForReview = 'ready_for_review',
 }
 
-export enum EnumMergeConflictAction {
+export enum EnumMergeFailAction {
   Fail = 'fail',
   Ignore = 'ignore',
   Comment = 'comment',
@@ -93,7 +94,23 @@ export interface IEnvironment {
   prReadyState: EnumPRReadyState;
   prLabels: string[];
   excludePrLabels: string[];
-  mergeConflictAction: EnumMergeConflictAction;
+  mergeFailAction: EnumMergeFailAction;
   mergeMethod: EnumMergeMethod;
   mergeCommitMessage: string;
+  ignoreConflicts: boolean;
+}
+
+export interface IGraphQLErrors {
+  request: {
+    query: string;
+    variables: Record<string, unknown>;
+    baseUrl: string;
+  };
+  headers: Record<string, string>;
+  response: {
+    data: Record<string, unknown>;
+    errors: (GraphQLError & { type: string })[];
+  };
+  errors: (GraphQLError & { type: string })[];
+  name: string;
 }
