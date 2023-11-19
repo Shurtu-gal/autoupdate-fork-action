@@ -9,7 +9,7 @@ import {
 } from '../types';
 import * as core from '@actions/core';
 import { addCommentToPullRequest } from './api-calls';
-import { CONFLICT_COMMENT, DIRTY_COMMENT } from 'src/constants';
+import { CONFLICT_COMMENT, DIRTY_COMMENT } from '../../src/constants';
 
 export const prNeedsUpdate = (
   pullRequest: PullRequest,
