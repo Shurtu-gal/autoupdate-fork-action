@@ -73,7 +73,7 @@ export enum EnumPRReadyState {
   ReadyForReview = 'ready_for_review',
 }
 
-export enum EnumMergeConflictAction {
+export enum EnumMergeFailAction {
   Fail = 'fail',
   Ignore = 'ignore',
   Comment = 'comment',
@@ -94,9 +94,10 @@ export interface IEnvironment {
   prReadyState: EnumPRReadyState;
   prLabels: string[];
   excludePrLabels: string[];
-  mergeConflictAction: EnumMergeConflictAction;
+  mergeFailAction: EnumMergeFailAction;
   mergeMethod: EnumMergeMethod;
   mergeCommitMessage: string;
+  ignoreConflicts: boolean;
 }
 
 export interface IGraphQLErrors {

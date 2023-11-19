@@ -31664,7 +31664,7 @@ function setupEnvironment() {
         const prReadyState = getValueFromInput('pr_ready_state', false, types_1.EnumPRReadyState.All, undefined, types_1.EnumPRReadyState);
         const prLabels = getValueFromInput('pr_label', false, [], commaSeparatedStringToArray);
         const excludePrLabels = getValueFromInput('exclude_pr_label', false, [], commaSeparatedStringToArray);
-        const mergeConflictAction = getValueFromInput('merge_conflict_action', false, types_1.EnumMergeConflictAction.Fail, undefined, types_1.EnumMergeConflictAction);
+        const mergeFailAction = getValueFromInput('merge_conflict_action', false, types_1.EnumMergeConflictAction.Fail, undefined, types_1.EnumMergeConflictAction);
         const mergeMethod = getValueFromInput('merge_method', false, types_1.EnumMergeMethod.Merge, undefined, types_1.EnumMergeMethod);
         const mergeCommitMessage = getValueFromInput('merge_commit_message', false, '');
         const githubRestApiUrl = process.env.GITHUB_API_URL || 'https://api.github.com';
@@ -31678,7 +31678,7 @@ function setupEnvironment() {
             prReadyState,
             prLabels,
             excludePrLabels,
-            mergeConflictAction,
+            mergeFailAction,
             mergeMethod,
             mergeCommitMessage,
         };
