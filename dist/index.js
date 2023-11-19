@@ -31664,9 +31664,10 @@ function setupEnvironment() {
         const prReadyState = getValueFromInput('pr_ready_state', false, types_1.EnumPRReadyState.All, undefined, types_1.EnumPRReadyState);
         const prLabels = getValueFromInput('pr_label', false, [], commaSeparatedStringToArray);
         const excludePrLabels = getValueFromInput('exclude_pr_label', false, [], commaSeparatedStringToArray);
-        const mergeFailAction = getValueFromInput('merge_conflict_action', false, types_1.EnumMergeConflictAction.Fail, undefined, types_1.EnumMergeConflictAction);
+        const mergeFailAction = getValueFromInput('merge_fail_action', false, types_1.EnumMergeFailAction.Fail, undefined, types_1.EnumMergeFailAction);
         const mergeMethod = getValueFromInput('merge_method', false, types_1.EnumMergeMethod.Merge, undefined, types_1.EnumMergeMethod);
         const mergeCommitMessage = getValueFromInput('merge_commit_message', false, '');
+        const ignoreConflicts = getValueFromInput('ignore_conflicts', false, true, value => value === 'true');
         const githubRestApiUrl = process.env.GITHUB_API_URL || 'https://api.github.com';
         const githubGraphqlApiUrl = process.env.GITHUB_GRAPHQL_URL || 'https://api.github.com/graphql';
         return {
@@ -31681,6 +31682,7 @@ function setupEnvironment() {
             mergeFailAction,
             mergeMethod,
             mergeCommitMessage,
+            ignoreConflicts,
         };
     }
     catch (error) {
@@ -31736,7 +31738,7 @@ async function updateAllBranches(octokit, owner, repo, environment) {
         core.startGroup(`Updating pull request ${pull.number}`);
         core.debug(`Pull request payload: ${JSON.stringify(pull, null, 2)}`);
         if ((0, pr_needs_update_1.prNeedsUpdate)(pull, environment, octokit)) {
-            await (0, api_calls_1.updatePullRequest)(octokit, pull, environment.githubRestApiUrl);
+            await (0, api_calls_1.updatePullRequest)(octokit, pull, environment.githubRestApiUrl, environment.mergeFailAction);
         }
         core.endGroup();
     });
@@ -31788,7 +31790,7 @@ async function updatePullRequestsOnBranch(octokit, owner, branch, repo, environm
         core.startGroup(`Updating pull request ${pull.number}`);
         core.debug(`Pull request payload: ${JSON.stringify(pull, null, 2)}`);
         if ((0, pr_needs_update_1.prNeedsUpdate)(pull, environment, octokit)) {
-            await (0, api_calls_1.updatePullRequest)(octokit, pull, environment.githubRestApiUrl);
+            await (0, api_calls_1.updatePullRequest)(octokit, pull, environment.githubRestApiUrl, environment.mergeFailAction);
         }
         core.endGroup();
     });
@@ -31840,7 +31842,7 @@ async function updatePullRequestNode(octokit, pullRequest, environment) {
         return;
     }
     if ((0, pr_needs_update_1.prNeedsUpdate)(pullRequestNode, environment, octokit)) {
-        await (0, api_calls_1.updatePullRequest)(octokit, pullRequestNode, environment.githubRestApiUrl);
+        await (0, api_calls_1.updatePullRequest)(octokit, pullRequestNode, environment.githubRestApiUrl, environment.mergeFailAction);
     }
     core.endGroup();
     return;
@@ -32144,7 +32146,7 @@ run();
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.EnumMergeMethod = exports.EnumMergeConflictAction = exports.EnumPRReadyState = exports.EnumPRFilter = exports.mergeableState = exports.mergeStateStatus = void 0;
+exports.EnumMergeMethod = exports.EnumMergeFailAction = exports.EnumPRReadyState = exports.EnumPRFilter = exports.mergeableState = exports.mergeStateStatus = void 0;
 /**
  * @see https://docs.github.com/en/graphql/reference/enums#mergestatestatus
  */
@@ -32182,12 +32184,12 @@ var EnumPRReadyState;
     EnumPRReadyState["Draft"] = "draft";
     EnumPRReadyState["ReadyForReview"] = "ready_for_review";
 })(EnumPRReadyState || (exports.EnumPRReadyState = EnumPRReadyState = {}));
-var EnumMergeConflictAction;
-(function (EnumMergeConflictAction) {
-    EnumMergeConflictAction["Fail"] = "fail";
-    EnumMergeConflictAction["Ignore"] = "ignore";
-    EnumMergeConflictAction["Comment"] = "comment";
-})(EnumMergeConflictAction || (exports.EnumMergeConflictAction = EnumMergeConflictAction = {}));
+var EnumMergeFailAction;
+(function (EnumMergeFailAction) {
+    EnumMergeFailAction["Fail"] = "fail";
+    EnumMergeFailAction["Ignore"] = "ignore";
+    EnumMergeFailAction["Comment"] = "comment";
+})(EnumMergeFailAction || (exports.EnumMergeFailAction = EnumMergeFailAction = {}));
 var EnumMergeMethod;
 (function (EnumMergeMethod) {
     EnumMergeMethod["Merge"] = "merge";
@@ -32250,6 +32252,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const pull_request_1 = __nccwpck_require__(1924);
 const node_1 = __nccwpck_require__(7637);
 const pull_request_2 = __nccwpck_require__(5957);
+const types_1 = __nccwpck_require__(5077);
 const constants_1 = __nccwpck_require__(9042);
 const headRef = (owner, branch, repo) => `${owner}:${repo}:${branch}`;
 async function getPullRequestsOnBranch(octokit, branch, owner, repo, baseUrl) {
@@ -32288,7 +32291,7 @@ async function getAllPullRequests(octokit, owner, repo, baseUrl) {
     return pulls;
 }
 exports.getAllPullRequests = getAllPullRequests;
-async function updatePullRequest(octokit, pullRequest, baseUrl) {
+async function updatePullRequest(octokit, pullRequest, baseUrl, mergeFailAction) {
     try {
         const response = (await octokit.graphql(pull_request_1.updatePullRequestBranchMutation, {
             input: {
@@ -32307,9 +32310,17 @@ async function updatePullRequest(octokit, pullRequest, baseUrl) {
         core.debug(`Error: ${JSON.stringify(error, null, 2)}`);
         const GraphQLError = error;
         if (GraphQLError.name === 'GraphqlResponseError' &&
-            GraphQLError.errors.some(error => error.type === 'FORBIDDEN')) {
+            GraphQLError.errors.some(error => error.type === 'FORBIDDEN' || error.type === 'UNAUTHORIZED')) {
             core.info(`Failed to update pull request ${pullRequest.number} due to permissions issue`);
-            addCommentToPullRequest(octokit, pullRequest, constants_1.PERMISSION_COMMENT, baseUrl);
+            if (mergeFailAction === types_1.EnumMergeFailAction.Comment) {
+                await addCommentToPullRequest(octokit, pullRequest, constants_1.PERMISSION_COMMENT, baseUrl);
+            }
+            else if (mergeFailAction === types_1.EnumMergeFailAction.Fail) {
+                core.setFailed(`Failed to update pull request ${pullRequest.number} due to permissions issue`);
+            }
+            else {
+                core.info(`Skipping pull request ${pullRequest.number} due to permissions issue`);
+            }
         }
     }
 }
@@ -32419,7 +32430,9 @@ const prNeedsUpdate = (pullRequest, environment, octokit) => {
     }
     if (pullRequest.mergeable === types_1.mergeableState.CONFLICTING) {
         core.error(`Pull request ${pullRequest.number} has conflicts`);
-        (0, api_calls_1.addCommentToPullRequest)(octokit, pullRequest, constants_1.CONFLICT_COMMENT, environment.githubRestApiUrl);
+        if (!environment.ignoreConflicts) {
+            (0, api_calls_1.addCommentToPullRequest)(octokit, pullRequest, constants_1.CONFLICT_COMMENT, environment.githubRestApiUrl);
+        }
         return false;
     }
     if (pullRequest.mergeable === types_1.mergeableState.UNKNOWN) {
@@ -32465,7 +32478,7 @@ const prNeedsUpdate = (pullRequest, environment, octokit) => {
         default:
             return false;
     }
-    if (comment) {
+    if (comment && environment.mergeFailAction === types_1.EnumMergeFailAction.Comment) {
         (0, api_calls_1.addCommentToPullRequest)(octokit, pullRequest, comment, environment.githubRestApiUrl);
     }
     return false;

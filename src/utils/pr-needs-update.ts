@@ -24,7 +24,7 @@ export const prNeedsUpdate = (
 
   if (pullRequest.mergeable === mergeableState.CONFLICTING) {
     core.error(`Pull request ${pullRequest.number} has conflicts`);
-    if(!environment.ignoreConflicts) {
+    if (!environment.ignoreConflicts) {
       addCommentToPullRequest(
         octokit,
         pullRequest,
