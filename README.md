@@ -7,11 +7,11 @@
 [![Coverage](./badges/coverage.svg)](./badges/coverage.svg)
 
 GitHub Action that automatically updates a forked repository with the latest changes from its upstream. It is useful for cases like:-
- - You want to keep the forked repository up to date with the upstream repository to have the most recent version of the code and tests.
- - Especially useful for forks of repositories that are actively developed and maintained.
- - You have a branch rule that requires all branches to be up to date with the base branch before merging.
+- You want to keep the forked repository up to date with the upstream repository to have the most recent version of the code and tests.
+- Especially useful for forks of repositories that are actively developed and maintained.
+- You have a branch rule that requires all branches to be up to date with the base branch before merging.
 
-### Table of Contents
+## Table of Contents
 - [Motivation](#motivation)
 - [Supported Scenarios](#supported-scenarios)
   - [Push to Base Branch](#push-to-base-branch)
@@ -32,9 +32,9 @@ GitHub Action that automatically updates a forked repository with the latest cha
 
 ## Motivation
 
-When you fork a repository, it is usually to make changes to it. However, if the upstream repository is actively developed and maintained, your fork will quickly become out of date. This action helps you keep your fork up to date with the upstream repository. It does so by automatically merging the latest changes from the upstream repository into your fork. 
+When you fork a repository, it is usually to make changes to it. However, if the upstream repository is actively developed and maintained, your fork will quickly become out of date. This action helps you keep your fork up to date with the upstream repository. It does so by automatically merging the latest changes from the upstream repository into your fork.
 
-It becomes helpful when the Pull Request is not merged for a long time and you want to keep your fork up to date with the upstream repository. 
+It becomes helpful when the Pull Request is not merged for a long time and you want to keep your fork up to date with the upstream repository.
 
 Needed when there is a branch rule that requires all branches to be up to date with the base branch before merging.
 
@@ -50,7 +50,7 @@ You can schedule the action to run at a specific time. This is useful when you w
 
 ### Update on comments
 
-You can trigger the action by commenting on a PR. This is useful when you want to update a specific PR with the latest changes from the upstream repository. 
+You can trigger the action by commenting on a PR. This is useful when you want to update a specific PR with the latest changes from the upstream repository.
 
 Advantage of this approach is that anyone can trigger the action by commenting on the PR whether he be a collaborator/maintainer or not. Eases the review process.
 
@@ -69,7 +69,7 @@ This makes a GraphQL request to GitHub API to get all the PRs acc. to parameters
 
 | Parameter | Description | Required | Default |
 | --- | --- | --- | --- |
-| `github_token` | Token used to authenticate with the GitHub API. It should belong to a user with write/maintain permissions to the repository. It also must have "repo" and "workflow" scopes so it can push to repo and edit workflows. It can also be the default token provided by GitHub Actions if it has the required scopes. Suggestions: Create a bot user and give it write access to the repos. | Yes | - |
+| `github_token` | Token used to authenticate with the GitHub API. It should belong to a user with write/maintain permissions to the repository. It also must have "repository" and "workflow" scopes so it can push to repository and edit workflows. Suggestions: Create a bot user and give it write access to the repos. | Yes | - |
 | `base_branch` | The comma-separated list of base branches on which pull requests should be updated. | No | `master, main` |
 | `pr_filter` | Controls how autoupdate chooses which pull requests to operate on. Possible values are `all`, `labelled`. | No | `all` |
 | `pr_label` | The comma-separated list of labels to filter pull requests on. Only pull requests one of with these labels will be updated. **Only works if `pr_filter` is labelled** | No | `autoupdate` |
@@ -203,7 +203,7 @@ jobs:
 
 ## Debugging
 
-In case something ain't right, the action doesn't work as expected, enable debugging. Add to **Secrets** of the repository a secret called `ACTIONS_STEP_DEBUG` with value `true`. Now, once you run the action again, there will be additional logs visible that start with `DEBUG: `.
+In case something ain't right, the action doesn't work as expected, enable debugging. Add to **Secrets** of the repository a secret called `ACTIONS_STEP_DEBUG` with value `true`. Now, once you run the action again, there will be additional logs visible that start with `DEBUG:`.
 
 ## Future Plans
 
