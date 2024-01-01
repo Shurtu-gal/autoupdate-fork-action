@@ -46,7 +46,6 @@ jobs:
           github_token: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN || github.token }}
           pr_filter: ${{ github.event.inputs.pr_filter || inputs.pr_filter || 'all' }}
           pr_label: ${{ inputs.pr_label || 'test-autoupdate' }}
-          pr_ready_state: 'all'
           exclude_pr_label: ''
           merge_fail_action: 'fail'
           merge_method: 'merge'

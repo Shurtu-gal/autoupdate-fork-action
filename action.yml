@@ -10,7 +10,7 @@ inputs:
   github_token:
     description: >
       Token used to authenticate with the GitHub API. It should belong to a user with write/maintain permissions to the repository. It also must have "repo" and "workflow" scopes so it can push to repo and edit workflows.
-      It cannot be the default GitHub Actions token GITHUB_TOKEN. GitHub Action token's permissions are limited to the repository that contains your workflows.
+      It can also be the default GitHub Actions token GITHUB_TOKEN if it has write/maintain permissions to the repository.
       Provide token of the user that has rights to push to the repos that this action is suppose to update. Suggestions: Create a bot user and give it write access to the repos.
     required: true
   
@@ -36,15 +36,6 @@ inputs:
       The comma-separated list of labels to filter pull requests by. Only used when pr_filter is labeled.
     required: false
     default: 'autoupdate'
-
-  pr_ready_state:
-    description: >
-      Controls how autoupdate chooses which pull requests to operate on based on draft/ready state.
-      - all: Operate on all pull requests.
-      - draft: Operate on pull requests that are in draft state. ( Not supported yet. Will be supported in future releases.)
-      - ready_for_review: Operate on pull requests that are in ready for review state.
-    required: false
-    default: 'all'
 
   exclude_pr_label:
     description: >
