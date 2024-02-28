@@ -6,7 +6,7 @@ import * as github from '@actions/github';
 import { retry } from '@octokit/plugin-retry';
 import { setupEnvironment } from './environment';
 import { updatePullRequestNode } from './events/update-pull-request';
-import { RestIssue, RestPullRequest } from './types';
+import { EnumPRFilter, RestIssue, RestPullRequest } from './types';
 import { updatePullRequestsOnBranch } from './events/update-branch-pull-request';
 import { updateAllBranches } from './events/update-all-branches';
 
@@ -100,7 +100,7 @@ export async function run(): Promise<void> {
           await updatePullRequestNode(
             octokit,
             pull_request.data as RestPullRequest,
-            environment
+            {...environment, prFilter: EnumPRFilter.All }
           );
         }
         break;

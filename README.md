@@ -96,7 +96,8 @@ jobs:
     steps:
       - uses: Shurtu-gal/autoupdate-fork-action@v1
         with:
-          github_token: ${{ secrets.BOT_TOKEN }}       pr_filter: labelled
+          github_token: ${{ secrets.BOT_TOKEN }}       
+          pr_filter: labelled
           pr_label: fork-update
 ```
 
