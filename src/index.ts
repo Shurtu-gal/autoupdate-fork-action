@@ -100,7 +100,7 @@ export async function run(): Promise<void> {
           await updatePullRequestNode(
             octokit,
             pull_request.data as RestPullRequest,
-            {...environment, prFilter: EnumPRFilter.All }
+            { ...environment, prFilter: EnumPRFilter.All }
           );
         }
         break;

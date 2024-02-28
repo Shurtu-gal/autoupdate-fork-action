@@ -32040,6 +32040,7 @@ const github = __importStar(__nccwpck_require__(5438));
 const plugin_retry_1 = __nccwpck_require__(6298);
 const environment_1 = __nccwpck_require__(6869);
 const update_pull_request_1 = __nccwpck_require__(4558);
+const types_1 = __nccwpck_require__(5077);
 const update_branch_pull_request_1 = __nccwpck_require__(1636);
 const update_all_branches_1 = __nccwpck_require__(9170);
 const triggerEventName = process.env.GITHUB_EVENT_NAME;
@@ -32107,7 +32108,7 @@ async function run() {
                         pull_number: eventPayload.issue.number,
                     });
                     core.debug(`Pull request: ${JSON.stringify(pull_request, null, 2)}`);
-                    await (0, update_pull_request_1.updatePullRequestNode)(octokit, pull_request.data, environment);
+                    await (0, update_pull_request_1.updatePullRequestNode)(octokit, pull_request.data, { ...environment, prFilter: types_1.EnumPRFilter.All });
                 }
                 break;
             case 'push':
