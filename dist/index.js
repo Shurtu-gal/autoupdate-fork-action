@@ -31926,7 +31926,7 @@ exports.getAllPullRequestsQuery = exports.getPullRequestsQuery = void 0;
  * @since merge-info-preview is in preview, we need to pass the custom media type header to the graphql api.
  */
 exports.getPullRequestsQuery = `
-  query getPullRequest($owner: String!, $repo: String!, $branch: String!, $headRef: String!, labels: [String!]) {
+  query getPullRequest($owner: String!, $repo: String!, $branch: String!, $headRef: String!, $labels: [String!]) {
     repository(owner: $owner, name: $repo, followRenames: true) {
       pullRequests(states: OPEN, first: 100, baseRefName: $branch, labels: $labels, orderBy: {field: CREATED_AT, direction: DESC}) {
         edges {
@@ -31965,7 +31965,7 @@ exports.getPullRequestsQuery = `
  * @since merge-info-preview is in preview, we need to pass the custom media type header to the graphql api.
  */
 exports.getAllPullRequestsQuery = `
-  query getPullRequest($owner: String!, $repo: String!, $headRef: String!, labels: [String!]) {
+  query getPullRequest($owner: String!, $repo: String!, $headRef: String!, $labels: [String!]) {
     repository(owner: $owner, name: $repo, followRenames: true) {
       pullRequests(states: OPEN, first: 100, labels: $labels, orderBy: {field: CREATED_AT, direction: DESC}) {
         edges {
