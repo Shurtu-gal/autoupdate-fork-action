@@ -35,33 +35,39 @@ export async function getPullRequestsOnBranch(
 ): Promise<PullRequest[]> {
   core.debug(
     `Variables in getAllPullRequests: ${JSON.stringify(
-      { owner, repo, baseUrl, branch },
+      { owner, repo, baseUrl, branch, labels },
       null,
       2
     )}`
   );
-  const { repository } = (await octokit.graphql(getPullRequestsQuery, {
-    owner,
-    repo,
-    branch,
-    headRef: headRef(owner, branch, repo),
-    baseUrl,
-    labels: labels || null,
-  })) as GetPullRequestsQueryResponse;
 
-  const pulls = repository.pullRequests.edges.map(
-    edge => edge.node
-  ) as PullRequest[];
+  try {
+    const { repository } = (await octokit.graphql(getPullRequestsQuery, {
+      owner,
+      repo,
+      branch,
+      headRef: headRef(owner, branch, repo),
+      baseUrl,
+      labels: labels || null,
+    })) as GetPullRequestsQueryResponse;
 
-  if (pulls.length === 0) {
-    core.info(`No pull requests found on branch ${branch}`);
+    const pulls = repository.pullRequests.edges.map(
+      edge => edge.node
+    ) as PullRequest[];
+
+    if (pulls.length === 0) {
+      core.info(`No pull requests found on branch ${branch}`);
+    }
+
+    if (pulls.length > 1) {
+      core.info(`Found ${pulls.length} pull requests on branch ${branch}`);
+    }
+
+    return pulls;
+  } catch (error) {
+    core.error(`Error: ${JSON.stringify(error, null, 2)}`);
+    return [];
   }
-
-  if (pulls.length > 1) {
-    core.info(`Found ${pulls.length} pull requests on branch ${branch}`);
-  }
-
-  return pulls;
 }
 
 export async function getAllPullRequests(
@@ -71,27 +77,34 @@ export async function getAllPullRequests(
   baseUrl: string,
   labels?: string[]
 ): Promise<PullRequest[]> {
-  const { repository } = (await octokit.graphql(getAllPullRequestsQuery, {
-    owner,
-    repo,
-    headRef: headRef(owner, 'main', repo),
-    baseUrl,
-    labels: labels || null,
-  })) as GetPullRequestsQueryResponse;
+  console.log(JSON.stringify({ owner, repo, baseUrl, labels }, null, 2));
 
-  const pulls = repository.pullRequests.edges.map(
-    edge => edge.node
-  ) as PullRequest[];
+  try {
+    const { repository } = (await octokit.graphql(getAllPullRequestsQuery, {
+      owner,
+      repo,
+      headRef: headRef(owner, 'main', repo),
+      baseUrl,
+      labels: labels || null,
+    })) as GetPullRequestsQueryResponse;
 
-  if (pulls.length === 0) {
-    core.info(`No pull requests found`);
+    const pulls = repository.pullRequests.edges.map(
+      edge => edge.node
+    ) as PullRequest[];
+
+    if (pulls.length === 0) {
+      core.info(`No pull requests found`);
+    }
+
+    if (pulls.length > 1) {
+      core.info(`Found ${pulls.length} pull requests`);
+    }
+
+    return pulls;
+  } catch (error) {
+    core.error(`Error: ${JSON.stringify(error, null, 2)}`);
+    return [];
   }
-
-  if (pulls.length > 1) {
-    core.info(`Found ${pulls.length} pull requests`);
-  }
-
-  return pulls;
 }
 
 export async function updatePullRequest(

@@ -92,7 +92,7 @@ export interface IEnvironment {
   prFilter: EnumPRFilter;
   baseBranches: string[];
   prReadyState: EnumPRReadyState;
-  prLabels: string[];
+  prLabels?: string[];
   excludePrLabels: string[];
   mergeFailAction: EnumMergeFailAction;
   mergeMethod: EnumMergeMethod;

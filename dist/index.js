@@ -31662,7 +31662,7 @@ function setupEnvironment() {
         const prFilter = getValueFromInput('pr_filter', false, types_1.EnumPRFilter.All, undefined, types_1.EnumPRFilter);
         const baseBranches = getValueFromInput('base_branch', false, [], commaSeparatedStringToArray);
         const prReadyState = getValueFromInput('pr_ready_state', false, types_1.EnumPRReadyState.All, undefined, types_1.EnumPRReadyState);
-        const prLabels = getValueFromInput('pr_label', false, [], commaSeparatedStringToArray);
+        const prLabels = getValueFromInput('pr_label', false, undefined, commaSeparatedStringToArray);
         const excludePrLabels = getValueFromInput('exclude_pr_label', false, [], commaSeparatedStringToArray);
         const mergeFailAction = getValueFromInput('merge_fail_action', false, types_1.EnumMergeFailAction.Fail, undefined, types_1.EnumMergeFailAction);
         const mergeMethod = getValueFromInput('merge_method', false, types_1.EnumMergeMethod.Merge, undefined, types_1.EnumMergeMethod);
@@ -32257,41 +32257,54 @@ const types_1 = __nccwpck_require__(5077);
 const constants_1 = __nccwpck_require__(9042);
 const headRef = (owner, branch, repo) => `${owner}:${repo}:${branch}`;
 async function getPullRequestsOnBranch(octokit, branch, owner, repo, baseUrl, labels) {
-    core.debug(`Variables in getAllPullRequests: ${JSON.stringify({ owner, repo, baseUrl, branch }, null, 2)}`);
-    const { repository } = (await octokit.graphql(pull_request_2.getPullRequestsQuery, {
-        owner,
-        repo,
-        branch,
-        headRef: headRef(owner, branch, repo),
-        baseUrl,
-        labels: labels || null,
-    }));
-    const pulls = repository.pullRequests.edges.map(edge => edge.node);
-    if (pulls.length === 0) {
-        core.info(`No pull requests found on branch ${branch}`);
+    core.debug(`Variables in getAllPullRequests: ${JSON.stringify({ owner, repo, baseUrl, branch, labels }, null, 2)}`);
+    try {
+        const { repository } = (await octokit.graphql(pull_request_2.getPullRequestsQuery, {
+            owner,
+            repo,
+            branch,
+            headRef: headRef(owner, branch, repo),
+            baseUrl,
+            labels: labels || null,
+        }));
+        const pulls = repository.pullRequests.edges.map(edge => edge.node);
+        if (pulls.length === 0) {
+            core.info(`No pull requests found on branch ${branch}`);
+        }
+        if (pulls.length > 1) {
+            core.info(`Found ${pulls.length} pull requests on branch ${branch}`);
+        }
+        return pulls;
     }
-    if (pulls.length > 1) {
-        core.info(`Found ${pulls.length} pull requests on branch ${branch}`);
+    catch (error) {
+        core.error(`Error: ${JSON.stringify(error, null, 2)}`);
+        return [];
     }
-    return pulls;
 }
 exports.getPullRequestsOnBranch = getPullRequestsOnBranch;
 async function getAllPullRequests(octokit, owner, repo, baseUrl, labels) {
-    const { repository } = (await octokit.graphql(pull_request_2.getAllPullRequestsQuery, {
-        owner,
-        repo,
-        headRef: headRef(owner, 'main', repo),
-        baseUrl,
-        labels: labels || null,
-    }));
-    const pulls = repository.pullRequests.edges.map(edge => edge.node);
-    if (pulls.length === 0) {
-        core.info(`No pull requests found`);
+    console.log(JSON.stringify({ owner, repo, baseUrl, labels }, null, 2));
+    try {
+        const { repository } = (await octokit.graphql(pull_request_2.getAllPullRequestsQuery, {
+            owner,
+            repo,
+            headRef: headRef(owner, 'main', repo),
+            baseUrl,
+            labels: labels || null,
+        }));
+        const pulls = repository.pullRequests.edges.map(edge => edge.node);
+        if (pulls.length === 0) {
+            core.info(`No pull requests found`);
+        }
+        if (pulls.length > 1) {
+            core.info(`Found ${pulls.length} pull requests`);
+        }
+        return pulls;
     }
-    if (pulls.length > 1) {
-        core.info(`Found ${pulls.length} pull requests`);
+    catch (error) {
+        core.error(`Error: ${JSON.stringify(error, null, 2)}`);
+        return [];
     }
-    return pulls;
 }
 exports.getAllPullRequests = getAllPullRequests;
 async function updatePullRequest(octokit, pullRequest, baseUrl, mergeFailAction) {
@@ -32450,7 +32463,7 @@ const prNeedsUpdate = (pullRequest, environment, octokit) => {
         }
     }
     else if (prFilter === types_1.EnumPRFilter.Labelled) {
-        if (!prLabels.some(label => pullRequest.labels.nodes.some(node => node.name === label))) {
+        if (!prLabels?.some(label => pullRequest.labels.nodes.some(node => node.name === label))) {
             core.info(`Pull request ${pullRequest.number} does not have any of the specified labels`);
             return false;
         }
