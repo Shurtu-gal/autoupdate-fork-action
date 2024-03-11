@@ -30,7 +30,8 @@ export async function getPullRequestsOnBranch(
   branch: string,
   owner: string,
   repo: string,
-  baseUrl: string
+  baseUrl: string,
+  labels?: string[]
 ): Promise<PullRequest[]> {
   core.debug(
     `Variables in getAllPullRequests: ${JSON.stringify(
@@ -45,6 +46,7 @@ export async function getPullRequestsOnBranch(
     branch,
     headRef: headRef(owner, branch, repo),
     baseUrl,
+    labels: labels || null,
   })) as GetPullRequestsQueryResponse;
 
   const pulls = repository.pullRequests.edges.map(
@@ -66,13 +68,15 @@ export async function getAllPullRequests(
   octokit: Octokit,
   owner: string,
   repo: string,
-  baseUrl: string
+  baseUrl: string,
+  labels?: string[]
 ): Promise<PullRequest[]> {
   const { repository } = (await octokit.graphql(getAllPullRequestsQuery, {
     owner,
     repo,
     headRef: headRef(owner, 'main', repo),
     baseUrl,
+    labels: labels || null,
   })) as GetPullRequestsQueryResponse;
 
   const pulls = repository.pullRequests.edges.map(

@@ -31732,7 +31732,7 @@ const api_calls_1 = __nccwpck_require__(3301);
 const pr_needs_update_1 = __nccwpck_require__(5926);
 async function updateAllBranches(octokit, owner, repo, environment) {
     core.info(`Getting all branches for ${owner}/${repo}`);
-    const pulls = await (0, api_calls_1.getAllPullRequests)(octokit, owner, repo, environment.githubRestApiUrl);
+    const pulls = await (0, api_calls_1.getAllPullRequests)(octokit, owner, repo, environment.githubRestApiUrl, environment.prLabels);
     core.debug(`Found ${pulls.length} pull requests`);
     pulls.forEach(async (pull) => {
         core.startGroup(`Updating pull request ${pull.number}`);
@@ -31784,7 +31784,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const pr_needs_update_1 = __nccwpck_require__(5926);
 async function updatePullRequestsOnBranch(octokit, owner, branch, repo, environment) {
     core.info(`Updating pull requests on branch ${branch}`);
-    const pulls = await (0, api_calls_1.getPullRequestsOnBranch)(octokit, branch, owner, repo, environment.githubRestApiUrl);
+    const pulls = await (0, api_calls_1.getPullRequestsOnBranch)(octokit, branch, owner, repo, environment.githubRestApiUrl, environment.prLabels);
     core.debug(`Found ${pulls.length} pull requests on branch ${branch}`);
     pulls.forEach(async (pull) => {
         core.startGroup(`Updating pull request ${pull.number}`);
@@ -31926,9 +31926,9 @@ exports.getAllPullRequestsQuery = exports.getPullRequestsQuery = void 0;
  * @since merge-info-preview is in preview, we need to pass the custom media type header to the graphql api.
  */
 exports.getPullRequestsQuery = `
-  query getPullRequest($owner: String!, $repo: String!, $branch: String!, $headRef: String!) {
+  query getPullRequest($owner: String!, $repo: String!, $branch: String!, $headRef: String!, labels: [String!]) {
     repository(owner: $owner, name: $repo, followRenames: true) {
-      pullRequests(states: OPEN, first: 100, baseRefName: $branch) {
+      pullRequests(states: OPEN, first: 100, baseRefName: $branch, labels: $labels, orderBy: {field: CREATED_AT, direction: DESC}) {
         edges {
           node {
             number
@@ -31965,9 +31965,9 @@ exports.getPullRequestsQuery = `
  * @since merge-info-preview is in preview, we need to pass the custom media type header to the graphql api.
  */
 exports.getAllPullRequestsQuery = `
-  query getPullRequest($owner: String!, $repo: String!, $headRef: String!) {
+  query getPullRequest($owner: String!, $repo: String!, $headRef: String!, labels: [String!]) {
     repository(owner: $owner, name: $repo, followRenames: true) {
-      pullRequests(states: OPEN, first: 100) {
+      pullRequests(states: OPEN, first: 100, labels: $labels, orderBy: {field: CREATED_AT, direction: DESC}) {
         edges {
           node {
             number
@@ -32256,7 +32256,7 @@ const pull_request_2 = __nccwpck_require__(5957);
 const types_1 = __nccwpck_require__(5077);
 const constants_1 = __nccwpck_require__(9042);
 const headRef = (owner, branch, repo) => `${owner}:${repo}:${branch}`;
-async function getPullRequestsOnBranch(octokit, branch, owner, repo, baseUrl) {
+async function getPullRequestsOnBranch(octokit, branch, owner, repo, baseUrl, labels) {
     core.debug(`Variables in getAllPullRequests: ${JSON.stringify({ owner, repo, baseUrl, branch }, null, 2)}`);
     const { repository } = (await octokit.graphql(pull_request_2.getPullRequestsQuery, {
         owner,
@@ -32264,6 +32264,7 @@ async function getPullRequestsOnBranch(octokit, branch, owner, repo, baseUrl) {
         branch,
         headRef: headRef(owner, branch, repo),
         baseUrl,
+        labels: labels || null,
     }));
     const pulls = repository.pullRequests.edges.map(edge => edge.node);
     if (pulls.length === 0) {
@@ -32275,12 +32276,13 @@ async function getPullRequestsOnBranch(octokit, branch, owner, repo, baseUrl) {
     return pulls;
 }
 exports.getPullRequestsOnBranch = getPullRequestsOnBranch;
-async function getAllPullRequests(octokit, owner, repo, baseUrl) {
+async function getAllPullRequests(octokit, owner, repo, baseUrl, labels) {
     const { repository } = (await octokit.graphql(pull_request_2.getAllPullRequestsQuery, {
         owner,
         repo,
         headRef: headRef(owner, 'main', repo),
         baseUrl,
+        labels: labels || null,
     }));
     const pulls = repository.pullRequests.edges.map(edge => edge.node);
     if (pulls.length === 0) {
