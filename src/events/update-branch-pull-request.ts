@@ -16,7 +16,8 @@ export async function updatePullRequestsOnBranch(
     branch,
     owner,
     repo,
-    environment.githubRestApiUrl
+    environment.githubRestApiUrl,
+    environment.prLabels
   );
 
   core.debug(`Found ${pulls.length} pull requests on branch ${branch}`);

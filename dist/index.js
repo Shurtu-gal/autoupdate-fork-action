@@ -31662,7 +31662,7 @@ function setupEnvironment() {
         const prFilter = getValueFromInput('pr_filter', false, types_1.EnumPRFilter.All, undefined, types_1.EnumPRFilter);
         const baseBranches = getValueFromInput('base_branch', false, [], commaSeparatedStringToArray);
         const prReadyState = getValueFromInput('pr_ready_state', false, types_1.EnumPRReadyState.All, undefined, types_1.EnumPRReadyState);
-        const prLabels = getValueFromInput('pr_label', false, [], commaSeparatedStringToArray);
+        const prLabels = getValueFromInput('pr_label', false, undefined, commaSeparatedStringToArray);
         const excludePrLabels = getValueFromInput('exclude_pr_label', false, [], commaSeparatedStringToArray);
         const mergeFailAction = getValueFromInput('merge_fail_action', false, types_1.EnumMergeFailAction.Fail, undefined, types_1.EnumMergeFailAction);
         const mergeMethod = getValueFromInput('merge_method', false, types_1.EnumMergeMethod.Merge, undefined, types_1.EnumMergeMethod);
@@ -31732,7 +31732,7 @@ const api_calls_1 = __nccwpck_require__(3301);
 const pr_needs_update_1 = __nccwpck_require__(5926);
 async function updateAllBranches(octokit, owner, repo, environment) {
     core.info(`Getting all branches for ${owner}/${repo}`);
-    const pulls = await (0, api_calls_1.getAllPullRequests)(octokit, owner, repo, environment.githubRestApiUrl);
+    const pulls = await (0, api_calls_1.getAllPullRequests)(octokit, owner, repo, environment.githubRestApiUrl, environment.prLabels);
     core.debug(`Found ${pulls.length} pull requests`);
     pulls.forEach(async (pull) => {
         core.startGroup(`Updating pull request ${pull.number}`);
@@ -31784,7 +31784,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const pr_needs_update_1 = __nccwpck_require__(5926);
 async function updatePullRequestsOnBranch(octokit, owner, branch, repo, environment) {
     core.info(`Updating pull requests on branch ${branch}`);
-    const pulls = await (0, api_calls_1.getPullRequestsOnBranch)(octokit, branch, owner, repo, environment.githubRestApiUrl);
+    const pulls = await (0, api_calls_1.getPullRequestsOnBranch)(octokit, branch, owner, repo, environment.githubRestApiUrl, environment.prLabels);
     core.debug(`Found ${pulls.length} pull requests on branch ${branch}`);
     pulls.forEach(async (pull) => {
         core.startGroup(`Updating pull request ${pull.number}`);
@@ -31926,9 +31926,9 @@ exports.getAllPullRequestsQuery = exports.getPullRequestsQuery = void 0;
  * @since merge-info-preview is in preview, we need to pass the custom media type header to the graphql api.
  */
 exports.getPullRequestsQuery = `
-  query getPullRequest($owner: String!, $repo: String!, $branch: String!, $headRef: String!) {
+  query getPullRequest($owner: String!, $repo: String!, $branch: String!, $headRef: String!, $labels: [String!]) {
     repository(owner: $owner, name: $repo, followRenames: true) {
-      pullRequests(states: OPEN, first: 100, baseRefName: $branch) {
+      pullRequests(states: OPEN, first: 100, baseRefName: $branch, labels: $labels, orderBy: {field: CREATED_AT, direction: DESC}) {
         edges {
           node {
             number
@@ -31965,9 +31965,9 @@ exports.getPullRequestsQuery = `
  * @since merge-info-preview is in preview, we need to pass the custom media type header to the graphql api.
  */
 exports.getAllPullRequestsQuery = `
-  query getPullRequest($owner: String!, $repo: String!, $headRef: String!) {
+  query getPullRequest($owner: String!, $repo: String!, $headRef: String!, $labels: [String!]) {
     repository(owner: $owner, name: $repo, followRenames: true) {
-      pullRequests(states: OPEN, first: 100) {
+      pullRequests(states: OPEN, first: 100, labels: $labels, orderBy: {field: CREATED_AT, direction: DESC}) {
         edges {
           node {
             number
@@ -32040,6 +32040,7 @@ const github = __importStar(__nccwpck_require__(5438));
 const plugin_retry_1 = __nccwpck_require__(6298);
 const environment_1 = __nccwpck_require__(6869);
 const update_pull_request_1 = __nccwpck_require__(4558);
+const types_1 = __nccwpck_require__(5077);
 const update_branch_pull_request_1 = __nccwpck_require__(1636);
 const update_all_branches_1 = __nccwpck_require__(9170);
 const triggerEventName = process.env.GITHUB_EVENT_NAME;
@@ -32107,7 +32108,7 @@ async function run() {
                         pull_number: eventPayload.issue.number,
                     });
                     core.debug(`Pull request: ${JSON.stringify(pull_request, null, 2)}`);
-                    await (0, update_pull_request_1.updatePullRequestNode)(octokit, pull_request.data, environment);
+                    await (0, update_pull_request_1.updatePullRequestNode)(octokit, pull_request.data, { ...environment, prFilter: types_1.EnumPRFilter.All });
                 }
                 break;
             case 'push':
@@ -32255,40 +32256,55 @@ const pull_request_2 = __nccwpck_require__(5957);
 const types_1 = __nccwpck_require__(5077);
 const constants_1 = __nccwpck_require__(9042);
 const headRef = (owner, branch, repo) => `${owner}:${repo}:${branch}`;
-async function getPullRequestsOnBranch(octokit, branch, owner, repo, baseUrl) {
-    core.debug(`Variables in getAllPullRequests: ${JSON.stringify({ owner, repo, baseUrl, branch }, null, 2)}`);
-    const { repository } = (await octokit.graphql(pull_request_2.getPullRequestsQuery, {
-        owner,
-        repo,
-        branch,
-        headRef: headRef(owner, branch, repo),
-        baseUrl,
-    }));
-    const pulls = repository.pullRequests.edges.map(edge => edge.node);
-    if (pulls.length === 0) {
-        core.info(`No pull requests found on branch ${branch}`);
+async function getPullRequestsOnBranch(octokit, branch, owner, repo, baseUrl, labels) {
+    core.debug(`Variables in getAllPullRequests: ${JSON.stringify({ owner, repo, baseUrl, branch, labels }, null, 2)}`);
+    try {
+        const { repository } = (await octokit.graphql(pull_request_2.getPullRequestsQuery, {
+            owner,
+            repo,
+            branch,
+            headRef: headRef(owner, branch, repo),
+            baseUrl,
+            labels: labels || null,
+        }));
+        const pulls = repository.pullRequests.edges.map(edge => edge.node);
+        if (pulls.length === 0) {
+            core.info(`No pull requests found on branch ${branch}`);
+        }
+        if (pulls.length > 1) {
+            core.info(`Found ${pulls.length} pull requests on branch ${branch}`);
+        }
+        return pulls;
     }
-    if (pulls.length > 1) {
-        core.info(`Found ${pulls.length} pull requests on branch ${branch}`);
+    catch (error) {
+        core.error(`Error: ${JSON.stringify(error, null, 2)}`);
+        return [];
     }
-    return pulls;
 }
 exports.getPullRequestsOnBranch = getPullRequestsOnBranch;
-async function getAllPullRequests(octokit, owner, repo, baseUrl) {
-    const { repository } = (await octokit.graphql(pull_request_2.getAllPullRequestsQuery, {
-        owner,
-        repo,
-        headRef: headRef(owner, 'main', repo),
-        baseUrl,
-    }));
-    const pulls = repository.pullRequests.edges.map(edge => edge.node);
-    if (pulls.length === 0) {
-        core.info(`No pull requests found`);
+async function getAllPullRequests(octokit, owner, repo, baseUrl, labels) {
+    console.log(JSON.stringify({ owner, repo, baseUrl, labels }, null, 2));
+    try {
+        const { repository } = (await octokit.graphql(pull_request_2.getAllPullRequestsQuery, {
+            owner,
+            repo,
+            headRef: headRef(owner, 'main', repo),
+            baseUrl,
+            labels: labels || null,
+        }));
+        const pulls = repository.pullRequests.edges.map(edge => edge.node);
+        if (pulls.length === 0) {
+            core.info(`No pull requests found`);
+        }
+        if (pulls.length > 1) {
+            core.info(`Found ${pulls.length} pull requests`);
+        }
+        return pulls;
     }
-    if (pulls.length > 1) {
-        core.info(`Found ${pulls.length} pull requests`);
+    catch (error) {
+        core.error(`Error: ${JSON.stringify(error, null, 2)}`);
+        return [];
     }
-    return pulls;
 }
 exports.getAllPullRequests = getAllPullRequests;
 async function updatePullRequest(octokit, pullRequest, baseUrl, mergeFailAction) {
@@ -32447,7 +32463,7 @@ const prNeedsUpdate = (pullRequest, environment, octokit) => {
         }
     }
     else if (prFilter === types_1.EnumPRFilter.Labelled) {
-        if (!prLabels.some(label => pullRequest.labels.nodes.some(node => node.name === label))) {
+        if (!prLabels?.some(label => pullRequest.labels.nodes.some(node => node.name === label))) {
             core.info(`Pull request ${pullRequest.number} does not have any of the specified labels`);
             return false;
         }

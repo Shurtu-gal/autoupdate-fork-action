@@ -71,10 +71,10 @@ export function setupEnvironment(): IEnvironment {
       undefined,
       EnumPRReadyState
     );
-    const prLabels = getValueFromInput<string[]>(
+    const prLabels = getValueFromInput<string[] | undefined>(
       'pr_label',
       false,
-      [],
+      undefined,
       commaSeparatedStringToArray
     );
     const excludePrLabels = getValueFromInput<string[]>(

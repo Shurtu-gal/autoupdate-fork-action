@@ -53,7 +53,7 @@ export const prNeedsUpdate = (
     }
   } else if (prFilter === EnumPRFilter.Labelled) {
     if (
-      !prLabels.some(label =>
+      !prLabels?.some(label =>
         pullRequest.labels.nodes.some(node => node.name === label)
       )
     ) {

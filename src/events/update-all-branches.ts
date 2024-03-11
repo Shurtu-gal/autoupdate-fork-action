@@ -14,7 +14,8 @@ export async function updateAllBranches(
     octokit,
     owner,
     repo,
-    environment.githubRestApiUrl
+    environment.githubRestApiUrl,
+    environment.prLabels
   );
 
   core.debug(`Found ${pulls.length} pull requests`);
